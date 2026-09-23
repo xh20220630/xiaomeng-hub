@@ -1,0 +1,76 @@
+{
+  "mode": "built-in image_gen",
+  "notes": "Design-referenced isolated redraw/extraction, followed by deterministic alpha cleanup and packaging; not direct screen crops.",
+  "records": [
+    {
+      "file": "hero-source.png",
+      "reference": "design/ui-v3/01-conversations.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Extract/recreate only the exact ivory ceramic rabbit mascot seated holding a lime four-point star and a thin graphite orbital ring with one ivory satellite. Preserve pose, identity, two rounded ears, oval black eyes and small smile. Genuine transparent alpha, no UI or words, no floor shadow, square centered full object.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-c579be45-a281-4745-8527-d10e0d3f1b10.png"
+    },
+    {
+      "file": "empty-source.png",
+      "reference": "design/ui-v3/01-conversations.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Same Xiaomeng ceramic rabbit seated holding a lime four-point star with both hands; no orbital ring; optimistic calm expression, complete body, square composition, transparent alpha, no text or backdrop.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-23a68357-627f-4c67-a36a-4393c294525a.png"
+    },
+    {
+      "file": "avatar-source.png",
+      "reference": "design/ui-v3/01-conversations.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Head-only avatar of the same ivory ceramic rabbit with both tall rounded ears, black oval eyes and curved smile. Match original three-quarter view. No body, star or ring. Full opaque head with transparent background and safe margin.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-853fedea-d3c6-4398-8b2a-b5122cc69611.png"
+    },
+    {
+      "file": "project-source.png",
+      "reference": "design/ui-v3/02-projects.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Extract only the ivory ceramic file folder holding lime star from top hero. Match exact original 3D pose, soft material and lighting. Remove tiny printed words. Full isolated object with true alpha, no UI, checkerboard or floor.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-1d6d1a80-0aed-480a-90fb-c24bc01fba34.png"
+    },
+    {
+      "file": "inbox-source.png",
+      "reference": "design/ui-v3/03-inbox.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Extract only ivory ceramic mailbox with open door and lime envelope with star seal, including two lime notification strokes. Match design proportions, material, lighting and angle. Genuine alpha, no UI, text or ground.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-0e4d6314-bc89-4abf-8fa7-e4c4e8c57c14.png"
+    },
+    {
+      "file": "archive-source.png",
+      "reference": "design/ui-v3/04-archive.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Extract only ivory ceramic archive box with translucent mint glass lid, lime latch and upper-right four-point sparkle. Match original design and angle, remove printed words. True alpha, centered complete object, no UI or floor.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-826d9bd3-a43f-4c47-b1d9-9cb489879d5f.png"
+    },
+    {
+      "file": "agents-source.png",
+      "reference": "design/ui-v3/05-agents.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Extract only rounded ivory ceramic desktop monitor with graphite screen, lime four-point star and thin orbital ellipse. Match original three-quarter angle and include full stand. Genuine alpha and no UI, text or ground.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-ef9effc2-db85-412a-93a7-437e00a0560f.png"
+    },
+    {
+      "file": "settings-source.png",
+      "reference": "design/ui-v3/06-settings.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Extract interlocked mint-lime glass elongated capsule and graphite satin torus links. Preserve original 3D angle, materials, lighting and both holes. True RGBA alpha outside and inside holes, no backdrop or text.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-5559419b-b646-4c2d-9183-1b5e9e7b21ef.png"
+    },
+    {
+      "file": "project-cover-mint-source.png",
+      "reference": "design/ui-v3/02-projects.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Create left project-card cover: four softly rounded frosted mint-green glass cubes arranged like reference, soft 3D lighting and shadow, seamless pale gray-green #E9EDDF background, square composition. Intentionally opaque scene, no text, buttons, ellipsis or UI.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-895ca11e-4c75-4d92-9e29-47435cda7519.png"
+    },
+    {
+      "file": "project-cover-orbit-source.png",
+      "reference": "design/ui-v3/02-projects.png",
+      "mode": "built-in image_gen",
+      "final_prompt_spec": "Create right project-card cover: satin chrome sphere, graphite elliptical orbital ring and one silver moon, match reference angle, soft studio shadow and seamless pale neutral gray #E8E9E8 background. Intentionally opaque square scene, no text, buttons, ellipsis or UI.",
+      "generated_original": "C:\\Users\\Administrator\\.codex\\generated_images\\01a0afb1-42da-7021-aae8-cb92ba1bfaf1\\exec-ae759fa5-2cee-41cf-a74c-f361c752870f.png"
+    }
+  ]
+}

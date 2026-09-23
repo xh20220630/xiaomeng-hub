@@ -1,0 +1,82 @@
+{
+  "design_source": "design/ui-v3/01-conversations.png",
+  "assets": [
+    {
+      "source": "design/ui-v3/assets/hero-clean.png",
+      "file": "hero-orbit.png",
+      "size": 1024,
+      "inset": 0.04,
+      "purpose": "Conversation home hero, complete ceramic mascot and orbital ring, dark or light background"
+    },
+    {
+      "source": "design/ui-v3/assets/avatar-clean.png",
+      "file": "mascot-avatar.png",
+      "size": 320,
+      "inset": 0.06,
+      "purpose": "Matching Xiaomeng head avatar, conversation message avatar and account avatar"
+    },
+    {
+      "source": "design/ui-v3/assets/empty-clean.png",
+      "file": "empty-state.png",
+      "size": 512,
+      "inset": 0.06,
+      "purpose": "Compact optimistic empty state mascot, complete seated body without ring"
+    },
+    {
+      "source": "design/ui-v3/assets/project-clean.png",
+      "file": "project-art.png",
+      "size": 768,
+      "inset": 0.04,
+      "purpose": "Projects header ceramic folder and lime star",
+      "design_source": "design/ui-v3/02-projects.png"
+    },
+    {
+      "source": "design/ui-v3/assets/inbox-clean.png",
+      "file": "inbox-art.png",
+      "size": 768,
+      "inset": 0.04,
+      "purpose": "Inbox header ceramic mailbox and lime envelope",
+      "design_source": "design/ui-v3/03-inbox.png"
+    },
+    {
+      "source": "design/ui-v3/assets/archive-clean.png",
+      "file": "archive-art.png",
+      "size": 768,
+      "inset": 0.04,
+      "purpose": "Archive header ceramic storage box with mint glass lid",
+      "design_source": "design/ui-v3/04-archive.png"
+    },
+    {
+      "source": "design/ui-v3/assets/project-cover-mint-source.png",
+      "file": "project-cover-mint.png",
+      "size": 768,
+      "transparent": false,
+      "purpose": "Project card cover, frosted mint glass cubes with intentionally retained scene background and shadow",
+      "design_source": "design/ui-v3/02-projects.png"
+    },
+    {
+      "source": "design/ui-v3/assets/project-cover-orbit-source.png",
+      "file": "project-cover-orbit.png",
+      "size": 768,
+      "transparent": false,
+      "purpose": "Project card cover, satin chrome orbital planet with intentionally retained scene background and shadow",
+      "design_source": "design/ui-v3/02-projects.png"
+    },
+    {
+      "source": "design/ui-v3/assets/agents-clean.png",
+      "file": "agents-art.png",
+      "size": 768,
+      "inset": 0.04,
+      "purpose": "Agents and devices header, ivory desktop monitor with lime orbital display",
+      "design_source": "design/ui-v3/05-agents.png"
+    },
+    {
+      "source": "design/ui-v3/assets/settings-clean.png",
+      "file": "settings-art.png",
+      "size": 768,
+      "inset": 0.04,
+      "purpose": "Connection settings header, interlocked mint glass and graphite links with transparent holes",
+      "design_source": "design/ui-v3/06-settings.png"
+    }
+  ]
+}

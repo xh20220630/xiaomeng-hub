@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+@keyframes pulse {0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes floaty {0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+* { -webkit-font-smoothing:antialiased; }
+</style>
+</helmet>
+
+<!-- ===================== PAGE TITLE ===================== -->
+<div style="position:absolute;left:80px;top:24px;width:900px">
+  <div style="font:400 32px 'Patrick Hand';color:#3a352f">Claude 任务管理器 · 新功能线稿 v3</div>
+  <div style="font:400 15px 'Patrick Hand';color:#8a8275;margin-top:4px">低保真布局 + 真实 IP 插画「小梦」· 首页 → 项目对话 → 任务流转 → 审批抽屉 → 灵动岛</div>
+</div>
+
+<!-- ===================== ① IP 形象 ===================== -->
+<div data-drags-parent="0" style="position:absolute;left:80px;top:120px;font:400 21px 'Patrick Hand';color:#3a352f">① APP IP 形象 —「小梦 / MENG」</div>
+
+<!-- Hero mascot -->
+<div style="position:absolute;left:80px;top:192px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">形象 · 主视觉</div>
+  <div style="background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px">
+    <div style="width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,#f6cfe6 0%,#fbe0ee 52%,#fdf4f9 82%);display:flex;align-items:center;justify-content:center;overflow:hidden">
+      <img src="assets/mascot-main.png" alt="小梦" style="width:170px;height:170px;object-fit:contain;animation:floaty 4s ease-in-out infinite">
+    </div>
+    <div style="font:700 19px 'Patrick Hand';color:#3a352f">小梦 · MENG</div>
+    <div style="font:400 13px 'Patrick Hand';color:#7a7265;text-align:center;line-height:1.5">漂浮的梦幻精灵 = 在「云端守望」你的项目；尾尖的橘色火花 = Claude 的灵感与它的专属标识。状态变了就换张脸。</div>
+  </div>
+</div>
+
+<!-- Expression sheet -->
+<div style="position:absolute;left:460px;top:192px;width:600px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">表情 · 随任务状态切换</div>
+  <div style="background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);padding:22px;display:flex;justify-content:space-around;gap:10px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:9px">
+      <img src="assets/mascot-running.png" alt="运行中" style="width:100px;height:100px;object-fit:contain">
+      <div style="font:400 13px 'Patrick Hand';color:#b85c3a">运行中</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:9px">
+      <img src="assets/mascot-approval.png" alt="需审批" style="width:100px;height:100px;object-fit:contain">
+      <div style="font:400 13px 'Patrick Hand';color:#b85c3a">需审批</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:9px">
+      <img src="assets/mascot-completed.png" alt="已完成" style="width:100px;height:100px;object-fit:contain">
+      <div style="font:400 13px 'Patrick Hand';color:#6f8f6a">已完成</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:9px">
+      <img src="assets/mascot-error.png" alt="出错离线" style="width:100px;height:100px;object-fit:contain">
+      <div style="font:400 13px 'Patrick Hand';color:#9a9184">出错 / 离线</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:14px;margin-top:18px;align-items:flex-start">
+    <div style="background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px">
+      <img src="assets/mascot-icon.png" alt="App 图标" style="width:84px;height:84px;object-fit:contain;border-radius:18px">
+      <div style="font:400 12px 'Patrick Hand';color:#7a7265">App 图标</div>
+    </div>
+    <div style="background:#fef4a8;padding:13px 14px;font:400 13px 'Patrick Hand';color:#5c5444;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,.08);transform:rotate(-1deg);flex:1">真实插画版「小梦」已就位：粉嫩漂浮、星星头饰、蓝色大眼、橘色火花尾巴。同一角色 + 表情变化复用于卡片头像、聊天气泡、审批抽屉、灵动岛、锁屏与推送图标。</div>
+  </div>
+</div>
+
+<!-- ===================== ② 首页 ===================== -->
+<div data-drags-parent="0" style="position:absolute;left:80px;top:680px;font:400 21px 'Patrick Hand';color:#3a352f">② 首页 · 全部 Claude Code 项目 + 状态</div>
+
+<!-- HOME A -->
+<div style="position:absolute;left:80px;top:760px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">A · 统一列表（按时间）</div>
+  <div style="background:#faf7f1;border:2.5px solid #3a352f;border-radius:34px;height:660px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:70px;height:7px;border-radius:5px;background:#3a352f;opacity:.85"></div>
+    <div style="padding:36px 18px 18px">
+      <div style="display:flex;justify-content:space-between;font:400 11px 'Patrick Hand';color:#8a8275;margin-bottom:14px"><span>9:41</span><span>▮▮▮ ◗</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <img src="assets/mascot-avatar.png" alt="小梦" style="width:32px;height:32px;object-fit:contain">
+          <span style="font:700 17px 'Patrick Hand';color:#3a352f">任务监控</span>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:5px;font:400 12px 'Patrick Hand';color:#6f8f6a"><span style="width:7px;height:7px;border-radius:50%;background:#6f8f6a;display:inline-block"></span>已连接</span>
+      </div>
+      <div style="display:flex;gap:7px;margin-bottom:18px">
+        <span style="display:inline-flex;align-items:center;gap:5px;font:400 12px 'Patrick Hand';color:#b85c3a;border:1.5px solid #e3b9a4;border-radius:20px;padding:3px 11px"><span style="width:6px;height:6px;border-radius:50%;background:#d97757;display:inline-block;animation:pulse 1.4s infinite"></span>3 运行</span>
+        <span style="font:400 12px 'Patrick Hand';color:#fff;background:#d97757;border-radius:20px;padding:4px 12px">▲ 1 待批准</span>
+        <span style="font:400 12px 'Patrick Hand';color:#6f8f6a;border:1.5px solid #b9cdb4;border-radius:20px;padding:3px 11px">✓ 2 完成</span>
+      </div>
+      <div style="font:400 13px 'Patrick Hand';color:#8a8275;margin-bottom:11px">全部项目 · 6</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="background:#fff;border:1.5px solid #d8d0c2;border-left:4px solid #d97757;border-radius:14px;padding:13px 13px;display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font:700 13px 'Space Mono';color:#3a352f">~/work/api-server</span>
+            <span style="font:400 11px 'Patrick Hand';color:#fff;background:#d97757;border-radius:14px;padding:2px 9px">需审批</span>
+          </div>
+          <div style="font:400 12px 'Space Mono';color:#8a8275">$ git push --force origin main</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <img src="assets/mascot-approval.png" alt="小梦" style="width:26px;height:26px;object-fit:contain">
+            <span style="font:400 12px 'Patrick Hand';color:#b85c3a;flex:1">小梦在等你批准</span>
+            <span style="font:400 11px 'Patrick Hand';color:#a39a8b">2 分钟前</span>
+          </div>
+        </div>
+        <div style="background:#fff;border:1.5px solid #d8d0c2;border-radius:14px;padding:13px 13px;display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font:700 13px 'Space Mono';color:#3a352f">~/web-dashboard</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font:400 11px 'Patrick Hand';color:#b85c3a;border:1.5px solid #e3b9a4;border-radius:14px;padding:2px 9px"><span style="width:5px;height:5px;border-radius:50%;background:#d97757;display:inline-block;animation:pulse 1.4s infinite"></span>运行中</span>
+          </div>
+          <div style="font:400 12px 'Patrick Hand';color:#7a7265">正在编辑 src/App.tsx — 第 12 步…</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:6px;background:#eee6da;border-radius:3px;overflow:hidden"><div style="width:62%;height:100%;background:#d97757"></div></div>
+            <span style="font:400 11px 'Patrick Hand';color:#a39a8b">刚刚</span>
+          </div>
+        </div>
+        <div style="background:#fff;border:1.5px solid #d8d0c2;border-radius:14px;padding:12px 13px;display:flex;flex-direction:column;gap:8px;opacity:.92">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font:700 13px 'Space Mono';color:#3a352f">~/data-pipeline</span>
+            <span style="font:400 11px 'Patrick Hand';color:#6f8f6a;border:1.5px solid #b9cdb4;border-radius:14px;padding:2px 9px">✓ 已完成</span>
+          </div>
+          <div style="display:flex;justify-content:space-between"><span style="font:400 12px 'Patrick Hand';color:#7a7265">完成 7 个任务 · 无错误</span><span style="font:400 11px 'Patrick Hand';color:#a39a8b">10 分钟前</span></div>
+        </div>
+        <div style="background:#fbf9f4;border:1.5px solid #e2dccf;border-radius:14px;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;opacity:.7">
+          <span style="font:700 13px 'Space Mono';color:#6b6357">~/scripts</span>
+          <span style="font:400 11px 'Patrick Hand';color:#9a9184">已结束</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOME B -->
+<div style="position:absolute;left:480px;top:760px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">B · 按状态分组（优先级）</div>
+  <div style="background:#faf7f1;border:2.5px solid #3a352f;border-radius:34px;height:660px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:70px;height:7px;border-radius:5px;background:#3a352f;opacity:.85"></div>
+    <div style="padding:36px 18px 18px">
+      <div style="display:flex;justify-content:space-between;font:400 11px 'Patrick Hand';color:#8a8275;margin-bottom:14px"><span>9:41</span><span>▮▮▮ ◗</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <span style="font:700 18px 'Patrick Hand';color:#3a352f">我的项目</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font:400 12px 'Patrick Hand';color:#6f8f6a"><span style="width:7px;height:7px;border-radius:50%;background:#6f8f6a;display:inline-block"></span>已连接</span>
+      </div>
+      <div style="font:700 13px 'Patrick Hand';color:#b85c3a;margin-bottom:10px">▲ 需要你处理 · 1</div>
+      <div style="background:#fff;border:2px solid #d97757;border-radius:14px;padding:13px 13px;display:flex;gap:11px;align-items:center;margin-bottom:20px">
+        <img src="assets/mascot-approval.png" alt="小梦" style="width:42px;height:42px;object-fit:contain">
+        <div style="flex:1">
+          <div style="font:700 13px 'Space Mono';color:#3a352f">api-server</div>
+          <div style="font:400 12px 'Patrick Hand';color:#b85c3a">请求执行 git push --force</div>
+        </div>
+        <span style="font:400 20px 'Patrick Hand';color:#d97757">›</span>
+      </div>
+      <div style="font:700 13px 'Patrick Hand';color:#7a7265;margin-bottom:10px">↻ 进行中 · 2</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+        <div style="background:#fff;border:1.5px solid #d8d0c2;border-radius:14px;padding:11px 13px;display:flex;gap:11px;align-items:center">
+          <img src="assets/mascot-avatar.png" alt="小梦" style="width:36px;height:36px;object-fit:contain">
+          <div style="flex:1"><div style="font:700 13px 'Space Mono';color:#3a352f">web-dashboard</div><div style="font:400 12px 'Patrick Hand';color:#7a7265">编辑 src/App.tsx…</div></div>
+          <span style="width:6px;height:6px;border-radius:50%;background:#d97757;display:inline-block;animation:pulse 1.4s infinite"></span>
+        </div>
+        <div style="background:#fff;border:1.5px solid #d8d0c2;border-radius:14px;padding:11px 13px;display:flex;gap:11px;align-items:center">
+          <img src="assets/mascot-avatar.png" alt="小梦" style="width:36px;height:36px;object-fit:contain">
+          <div style="flex:1"><div style="font:700 13px 'Space Mono';color:#3a352f">ml-trainer</div><div style="font:400 12px 'Patrick Hand';color:#7a7265">运行测试套件…</div></div>
+          <span style="width:6px;height:6px;border-radius:50%;background:#d97757;display:inline-block;animation:pulse 1.4s infinite"></span>
+        </div>
+      </div>
+      <div style="font:700 13px 'Patrick Hand';color:#7a7265;margin-bottom:8px">✓ 今日完成 · 3</div>
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <div style="display:flex;justify-content:space-between;padding:8px 2px;border-bottom:1px dashed #e2dccf"><span style="font:400 13px 'Space Mono';color:#6b6357">data-pipeline</span><span style="font:400 11px 'Patrick Hand';color:#6f8f6a">✓ 7 任务</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 2px;border-bottom:1px dashed #e2dccf"><span style="font:400 13px 'Space Mono';color:#6b6357">docs-site</span><span style="font:400 11px 'Patrick Hand';color:#6f8f6a">✓ 已部署</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 2px"><span style="font:400 13px 'Space Mono';color:#6b6357">cli-tool</span><span style="font:400 11px 'Patrick Hand';color:#6f8f6a">✓ 已合并</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="position:absolute;left:880px;top:800px;width:250px;background:#fef4a8;padding:14px 15px;font:400 13px 'Patrick Hand';color:#5c5444;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,.08);transform:rotate(1deg)">两种首页：<br>A 按时间扫全部，需审批卡片用赭石左边框 + 小梦头像置顶。<br>B 按「需不需要你处理」分组，最焦虑的事永远在最上面。</div>
+
+<!-- ===================== ③ 项目详情 ===================== -->
+<div data-drags-parent="0" style="position:absolute;left:80px;top:1500px;font:400 21px 'Patrick Hand';color:#3a352f">③ 项目详情 · 对话记录 + 任务状态流转</div>
+
+<!-- CHAT A -->
+<div style="position:absolute;left:80px;top:1580px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">A · 顶部横向步骤条</div>
+  <div style="background:#faf7f1;border:2.5px solid #3a352f;border-radius:34px;height:684px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:70px;height:7px;border-radius:5px;background:#3a352f;opacity:.85;z-index:3"></div>
+    <div style="padding:36px 16px 11px;border-bottom:1.5px solid #e2dccf;display:flex;align-items:center;gap:10px;background:#faf7f1">
+      <span style="font:400 22px 'Patrick Hand';color:#3a352f">‹</span>
+      <img src="assets/mascot-avatar.png" alt="小梦" style="width:28px;height:28px;object-fit:contain">
+      <div style="flex:1"><div style="font:700 14px 'Space Mono';color:#3a352f">api-server</div><div style="font:400 11px 'Patrick Hand';color:#b85c3a">运行中 · 第 12 步</div></div>
+      <span style="font:400 20px 'Patrick Hand';color:#6b6357">⋯</span>
+    </div>
+    <div style="padding:13px 14px 13px;border-bottom:1.5px solid #e2dccf;display:flex;align-items:center;justify-content:space-between;background:#fbf8f2">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:15px;height:15px;border-radius:50%;background:#6f8f6a"></div><span style="font:400 10px 'Patrick Hand';color:#7a7265">规划</span></div>
+      <div style="flex:1;height:2px;background:#6f8f6a;margin:0 3px 16px"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:18px;height:18px;border-radius:50%;background:#d97757;box-shadow:0 0 0 3px #f3ddd1"></div><span style="font:700 10px 'Patrick Hand';color:#b85c3a">执行</span></div>
+      <div style="flex:1;height:2px;background:#ddd5c7;margin:0 3px 16px"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:15px;height:15px;border-radius:50%;border:2px solid #c9c0b0;background:#fff"></div><span style="font:400 10px 'Patrick Hand';color:#a39a8b">审批</span></div>
+      <div style="flex:1;height:2px;background:#ddd5c7;margin:0 3px 16px"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:15px;height:15px;border-radius:50%;border:2px dashed #c9c0b0;background:#fff"></div><span style="font:400 10px 'Patrick Hand';color:#a39a8b">完成</span></div>
+    </div>
+    <div style="padding:14px 14px;display:flex;flex-direction:column;gap:13px;height:404px;overflow:hidden">
+      <div style="text-align:center"><span style="font:400 11px 'Patrick Hand';color:#a39a8b;background:#efe9dd;border-radius:12px;padding:3px 11px">今天 09:30</span></div>
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <img src="assets/mascot-avatar.png" alt="小梦" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;margin-top:2px">
+        <div style="background:#fff;border:1.5px solid #e2dccf;border-radius:4px 13px 13px 13px;padding:10px 11px;flex:1">
+          <div style="height:8px;background:#e8e2d6;border-radius:4px;margin-bottom:6px"></div>
+          <div style="height:8px;background:#e8e2d6;border-radius:4px;width:78%"></div>
+        </div>
+      </div>
+      <div style="margin-left:34px;background:#2f2a24;border-radius:9px;padding:10px 11px">
+        <div style="font:700 11px 'Space Mono';color:#d9a78c;margin-bottom:5px">⚙ Bash · npm test</div>
+        <div style="font:400 11px 'Space Mono';color:#9fb89a">✓ 24 passed</div>
+        <div style="font:400 11px 'Space Mono';color:#8a8275">— in 3.2s</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <div style="background:#f3ddd1;border-radius:13px 4px 13px 13px;padding:10px 12px;max-width:76%"><span style="font:400 13px 'Patrick Hand';color:#5c4a3f">继续，把它部署到 staging</span></div>
+      </div>
+      <div style="margin-left:34px;background:#2f2a24;border-radius:9px;padding:10px 11px">
+        <div style="font:700 11px 'Space Mono';color:#d9a78c">✎ Edit · deploy.yml</div>
+      </div>
+      <div style="text-align:center"><span style="font:400 12px 'Patrick Hand';color:#b85c3a;background:#f3ddd1;border-radius:14px;padding:4px 13px">● 等待审批：部署命令</span></div>
+    </div>
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 14px 16px;border-top:1.5px solid #e2dccf;background:#faf7f1;display:flex;align-items:center;gap:9px">
+      <div style="flex:1;height:38px;border:1.5px solid #d8d0c2;border-radius:20px;background:#fff;display:flex;align-items:center;padding:0 14px;font:400 13px 'Patrick Hand';color:#a39a8b">回复 Claude…</div>
+      <div style="width:38px;height:38px;border-radius:50%;background:#d97757;display:flex;align-items:center;justify-content:center;color:#fff;font:400 18px 'Patrick Hand'">↑</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT B -->
+<div style="position:absolute;left:480px;top:1580px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">B · 可展开的「任务时间线」面板</div>
+  <div style="background:#faf7f1;border:2.5px solid #3a352f;border-radius:34px;height:684px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:70px;height:7px;border-radius:5px;background:#3a352f;opacity:.85;z-index:3"></div>
+    <div style="padding:36px 16px 11px;border-bottom:1.5px solid #e2dccf;display:flex;align-items:center;gap:10px">
+      <span style="font:400 22px 'Patrick Hand';color:#3a352f">‹</span>
+      <div style="flex:1"><div style="font:700 14px 'Space Mono';color:#3a352f">web-dashboard</div></div>
+      <span style="font:400 12px 'Patrick Hand';color:#fff;background:#3a352f;border-radius:14px;padding:4px 11px">任务流转 ▾</span>
+    </div>
+    <div style="margin:13px 14px;background:#fff;border:1.5px solid #d8d0c2;border-radius:14px;padding:13px 14px">
+      <div style="font:700 12px 'Patrick Hand';color:#6b6357;margin-bottom:11px">任务时间线</div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div style="display:flex;gap:10px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:12px;height:12px;border-radius:50%;background:#6f8f6a"></div><div style="width:2px;flex:1;background:#ddd5c7"></div></div><div style="padding-bottom:11px"><div style="font:400 13px 'Patrick Hand';color:#3a352f">规划完成 · 6 步</div><div style="font:400 10px 'Patrick Hand';color:#a39a8b">09:30</div></div></div>
+        <div style="display:flex;gap:10px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:12px;height:12px;border-radius:50%;background:#6f8f6a"></div><div style="width:2px;flex:1;background:#ddd5c7"></div></div><div style="padding-bottom:11px"><div style="font:400 13px 'Patrick Hand';color:#3a352f">测试通过 · 24 项</div><div style="font:400 10px 'Patrick Hand';color:#a39a8b">09:36</div></div></div>
+        <div style="display:flex;gap:10px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:14px;height:14px;border-radius:50%;background:#d97757;box-shadow:0 0 0 3px #f3ddd1"></div><div style="width:2px;flex:1;background:#ddd5c7"></div></div><div style="padding-bottom:11px"><div style="font:700 13px 'Patrick Hand';color:#b85c3a">正在编辑 src/App.tsx</div><div style="font:400 10px 'Patrick Hand';color:#a39a8b">进行中 · 第 12 步</div></div></div>
+        <div style="display:flex;gap:10px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:12px;height:12px;border-radius:50%;border:2px dashed #c9c0b0;background:#fff"></div></div><div><div style="font:400 13px 'Patrick Hand';color:#a39a8b">等待部署审批</div></div></div>
+      </div>
+    </div>
+    <div style="padding:2px 14px;display:flex;flex-direction:column;gap:11px;height:236px;overflow:hidden">
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <img src="assets/mascot-avatar.png" alt="小梦" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;margin-top:2px">
+        <div style="background:#fff;border:1.5px solid #e2dccf;border-radius:4px 13px 13px 13px;padding:10px 11px;flex:1"><div style="height:8px;background:#e8e2d6;border-radius:4px;margin-bottom:6px"></div><div style="height:8px;background:#e8e2d6;border-radius:4px;width:68%"></div></div>
+      </div>
+      <div style="margin-left:34px;background:#2f2a24;border-radius:9px;padding:10px 11px"><div style="font:700 11px 'Space Mono';color:#d9a78c">✎ Edit · src/App.tsx</div><div style="font:400 11px 'Space Mono';color:#9fb89a;margin-top:4px">+18  −4</div></div>
+      <div style="display:flex;justify-content:flex-end"><div style="background:#f3ddd1;border-radius:13px 4px 13px 13px;padding:10px 12px"><span style="font:400 13px 'Patrick Hand';color:#5c4a3f">看起来不错 👍</span></div></div>
+    </div>
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 14px 16px;border-top:1.5px solid #e2dccf;background:#faf7f1;display:flex;align-items:center;gap:9px">
+      <div style="flex:1;height:38px;border:1.5px solid #d8d0c2;border-radius:20px;background:#fff;display:flex;align-items:center;padding:0 14px;font:400 13px 'Patrick Hand';color:#a39a8b">回复 Claude…</div>
+      <div style="width:38px;height:38px;border-radius:50%;background:#d97757;display:flex;align-items:center;justify-content:center;color:#fff;font:400 18px 'Patrick Hand'">↑</div>
+    </div>
+  </div>
+</div>
+
+<div style="position:absolute;left:880px;top:1620px;width:250px;background:#fef4a8;padding:14px 15px;font:400 13px 'Patrick Hand';color:#5c5444;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,.08);transform:rotate(-1deg)">对话复刻 Claude Code：浅气泡 + 深色「工具调用」块（Bash / Edit）。<br>任务流转 A 用顶部步骤条（始终可见），B 用可折叠时间线面板（信息更全）。</div>
+
+<!-- ===================== ④ 审批抽屉 ===================== -->
+<div data-drags-parent="0" style="position:absolute;left:80px;top:2360px;font:400 21px 'Patrick Hand';color:#3a352f">④ 审批抽屉 · 底部弹出请求批准</div>
+
+<!-- APPROVAL A -->
+<div style="position:absolute;left:80px;top:2440px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">A · 命令审批（批准 / 拒绝）</div>
+  <div style="background:#faf7f1;border:2.5px solid #3a352f;border-radius:34px;height:664px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:70px;height:7px;border-radius:5px;background:#3a352f;opacity:.85;z-index:3"></div>
+    <div style="padding:36px 16px 11px;opacity:.4">
+      <div style="display:flex;gap:10px;align-items:center;border-bottom:1.5px solid #e2dccf;padding-bottom:11px"><span style="font:400 20px 'Patrick Hand'">‹</span><span style="font:700 14px 'Space Mono';color:#3a352f">api-server</span></div>
+      <div style="margin-top:14px;height:9px;background:#e8e2d6;border-radius:4px;width:80%"></div>
+      <div style="margin-top:8px;height:9px;background:#e8e2d6;border-radius:4px;width:55%"></div>
+    </div>
+    <div style="position:absolute;inset:0;background:rgba(40,36,30,.4)"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;background:#fdfcf9;border-top-left-radius:26px;border-top-right-radius:26px;border:2.5px solid #3a352f;border-bottom:none;padding:14px 20px 22px;box-shadow:0 -10px 28px rgba(0,0,0,.22)">
+      <div style="width:46px;height:5px;border-radius:3px;background:#d8d0c2;margin:0 auto 16px"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:15px">
+        <img src="assets/mascot-approval.png" alt="小梦" style="width:54px;height:54px;object-fit:contain">
+        <div><div style="font:700 17px 'Patrick Hand';color:#3a352f">小梦需要你批准</div><div style="font:400 13px 'Patrick Hand';color:#8a8275">api-server · 执行命令</div></div>
+      </div>
+      <div style="background:#2f2a24;border-radius:11px;padding:13px 14px;margin-bottom:13px">
+        <div style="font:400 11px 'Space Mono';color:#8a8275;margin-bottom:6px"># Bash</div>
+        <div style="font:700 13px 'Space Mono';color:#e6c3ab">git push --force origin main</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:18px"><span style="color:#d97757;font:700 14px 'Patrick Hand'">⚠</span><span style="font:400 13px 'Patrick Hand';color:#b85c3a;line-height:1.4">强制推送会覆盖远端历史，操作不可撤销。</span></div>
+      <div style="display:flex;gap:11px;margin-bottom:13px">
+        <div style="flex:1;height:50px;border:2px solid #3a352f;border-radius:15px;display:flex;align-items:center;justify-content:center;font:700 15px 'Patrick Hand';color:#3a352f">拒绝</div>
+        <div style="flex:1;height:50px;background:#d97757;border-radius:15px;display:flex;align-items:center;justify-content:center;font:700 15px 'Patrick Hand';color:#fff">批准并执行</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center"><div style="width:17px;height:17px;border:1.5px solid #b3a99a;border-radius:4px"></div><span style="font:400 13px 'Patrick Hand';color:#7a7265">本次会话内始终允许此类命令</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- APPROVAL B -->
+<div style="position:absolute;left:480px;top:2440px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">B · 文件修改审批（带 diff + 选项）</div>
+  <div style="background:#faf7f1;border:2.5px solid #3a352f;border-radius:34px;height:664px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:70px;height:7px;border-radius:5px;background:#3a352f;opacity:.85;z-index:3"></div>
+    <div style="padding:36px 16px 11px;opacity:.4">
+      <div style="display:flex;gap:10px;align-items:center;border-bottom:1.5px solid #e2dccf;padding-bottom:11px"><span style="font:400 20px 'Patrick Hand'">‹</span><span style="font:700 14px 'Space Mono';color:#3a352f">web-dashboard</span></div>
+      <div style="margin-top:14px;height:9px;background:#e8e2d6;border-radius:4px;width:70%"></div>
+    </div>
+    <div style="position:absolute;inset:0;background:rgba(40,36,30,.4)"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;background:#fdfcf9;border-top-left-radius:26px;border-top-right-radius:26px;border:2.5px solid #3a352f;border-bottom:none;padding:14px 20px 20px;box-shadow:0 -10px 28px rgba(0,0,0,.22)">
+      <div style="width:46px;height:5px;border-radius:3px;background:#d8d0c2;margin:0 auto 14px"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
+        <img src="assets/mascot-approval.png" alt="小梦" style="width:38px;height:38px;object-fit:contain">
+        <div style="font:700 16px 'Patrick Hand';color:#3a352f">修改文件待批准</div>
+      </div>
+      <div style="font:400 12px 'Space Mono';color:#6b6357;margin-bottom:8px">✎ src/config.ts</div>
+      <div style="background:#2f2a24;border-radius:11px;padding:11px 13px;margin-bottom:15px;font:400 12px 'Space Mono';line-height:1.7">
+        <div style="color:#8a8275">@@ 14,16 @@</div>
+        <div style="color:#d98a7a;background:rgba(217,119,87,.14);border-radius:3px;padding:0 5px">- timeout: 30,</div>
+        <div style="color:#9fb89a;background:rgba(111,143,106,.16);border-radius:3px;padding:0 5px">+ timeout: 120,</div>
+        <div style="color:#9fb89a;background:rgba(111,143,106,.16);border-radius:3px;padding:0 5px">+ retries: 3,</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:11px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:19px;height:19px;border-radius:50%;border:2px solid #d97757;display:flex;align-items:center;justify-content:center"><div style="width:9px;height:9px;border-radius:50%;background:#d97757"></div></div><span style="font:400 14px 'Patrick Hand';color:#3a352f">仅本次允许此修改</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:19px;height:19px;border-radius:50%;border:2px solid #c9c0b0"></div><span style="font:400 14px 'Patrick Hand';color:#6b6357">始终允许编辑此文件</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:19px;height:19px;border-radius:50%;border:2px solid #c9c0b0"></div><span style="font:400 14px 'Patrick Hand';color:#6b6357">拒绝，并告诉 Claude 原因…</span></div>
+      </div>
+      <div style="height:50px;background:#d97757;border-radius:15px;display:flex;align-items:center;justify-content:center;font:700 15px 'Patrick Hand';color:#fff;margin-bottom:11px">确认</div>
+      <div style="text-align:center;font:400 13px 'Patrick Hand';color:#8a8275">查看完整 diff ›</div>
+    </div>
+  </div>
+</div>
+
+<div style="position:absolute;left:880px;top:2480px;width:250px;background:#fef4a8;padding:14px 15px;font:400 13px 'Patrick Hand';color:#5c5444;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,.08);transform:rotate(1deg)">抽屉从对话底部弹出、背景压暗。<br>A 危险命令：醒目警告 + 二选一。<br>B 文件修改：先看 diff，再用单选给「一次 / 永远 / 拒绝」三档，对齐 Claude Code 权限模型。</div>
+
+<!-- ===================== ⑤ 灵动岛 ===================== -->
+<div data-drags-parent="0" style="position:absolute;left:80px;top:3240px;font:400 21px 'Patrick Hand';color:#3a352f">⑤ 灵动岛 · Live Activity（任务实时活动）</div>
+<div data-drags-parent="0" style="position:absolute;left:80px;top:3272px;font:400 14px 'Patrick Hand';color:#8a8275">不打开 App 也能盯进度、收审批 —— 任务状态实时驻留在灵动岛 / 锁屏</div>
+
+<!-- ISLAND A: compact -->
+<div style="position:absolute;left:80px;top:3340px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">A · 紧凑态（在任意 App 之上）</div>
+  <div style="background:#cdbfe0;border:2.5px solid #3a352f;border-radius:34px;height:560px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);background:#11100e;border-radius:20px;height:38px;display:flex;align-items:center;gap:8px;padding:0 8px 0 13px;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.3)">
+      <span style="width:9px;height:9px;border-radius:50%;background:#d97757;display:inline-block;animation:pulse 1.3s infinite"></span>
+      <span style="font:700 12px 'Space Mono';color:#fff">12/18</span>
+      <span style="width:1px;height:16px;background:#444;display:inline-block;margin:0 1px"></span>
+      <img src="assets/mascot-avatar.png" alt="小梦" style="width:28px;height:28px;object-fit:contain">
+    </div>
+    <div style="position:absolute;top:64px;left:0;right:0;bottom:0;padding:14px 22px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px 16px;margin-top:8px">
+        <div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div><div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div><div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div><div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div>
+        <div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div><div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div><div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div><div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div>
+        <div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div><div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div><div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div><div style="aspect-ratio:1;background:rgba(255,255,255,.45);border-radius:14px"></div>
+      </div>
+      <div style="position:absolute;left:18px;right:18px;bottom:18px;height:78px;background:rgba(255,255,255,.4);border-radius:24px;display:flex;align-items:center;justify-content:space-around;padding:0 10px">
+        <div style="width:46px;height:46px;background:rgba(255,255,255,.6);border-radius:12px"></div><div style="width:46px;height:46px;background:rgba(255,255,255,.6);border-radius:12px"></div><div style="width:46px;height:46px;background:rgba(255,255,255,.6);border-radius:12px"></div><div style="width:46px;height:46px;background:rgba(255,255,255,.6);border-radius:12px"></div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;top:64px;left:184px;font:400 12px 'Patrick Hand';color:#6b6357;background:#fff;border:1.5px dashed #c9c0b0;border-radius:8px;padding:4px 8px;width:120px;line-height:1.35;box-shadow:0 1px 3px rgba(0,0,0,.08)">小圆点 + 进度 + 小梦头像，一眼看到任务在跑</div>
+</div>
+
+<!-- ISLAND B: expanded -->
+<div style="position:absolute;left:480px;top:3340px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">B · 展开态（长按）</div>
+  <div style="background:#cdbfe0;border:2.5px solid #3a352f;border-radius:34px;height:560px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:264px;background:#11100e;border-radius:26px;padding:14px 16px 15px;z-index:5;box-shadow:0 4px 16px rgba(0,0,0,.35)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#fbe0ee;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+          <img src="assets/mascot-avatar.png" alt="小梦" style="width:32px;height:32px;object-fit:contain">
+        </div>
+        <div style="flex:1"><div style="font:700 13px 'Space Mono';color:#fff">api-server</div><div style="font:400 11px 'Patrick Hand';color:#9b948a">编辑 src/App.tsx</div></div>
+        <span style="display:inline-flex;align-items:center;gap:4px;font:400 11px 'Patrick Hand';color:#e6c3ab"><span style="width:6px;height:6px;border-radius:50%;background:#d97757;display:inline-block;animation:pulse 1.3s infinite"></span>运行</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:13px">
+        <div style="flex:1;height:6px;background:#33302b;border-radius:3px;overflow:hidden"><div style="width:66%;height:100%;background:#d97757"></div></div>
+        <span style="font:700 11px 'Space Mono';color:#fff">12/18</span>
+      </div>
+      <div style="display:flex;gap:9px">
+        <div style="flex:1;height:36px;border:1.5px solid #4a463f;border-radius:11px;display:flex;align-items:center;justify-content:center;font:400 13px 'Patrick Hand';color:#e8e2d6">暂停</div>
+        <div style="flex:1;height:36px;background:#d97757;border-radius:11px;display:flex;align-items:center;justify-content:center;font:700 13px 'Patrick Hand';color:#fff">打开</div>
+      </div>
+    </div>
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(40,36,30,.28)"></div>
+  </div>
+  <div style="position:absolute;top:240px;left:30px;font:400 12px 'Patrick Hand';color:#6b6357;background:#fff;border:1.5px dashed #c9c0b0;border-radius:8px;padding:5px 9px;width:140px;line-height:1.35;box-shadow:0 1px 3px rgba(0,0,0,.08)">长按胀开：项目 / 当前步骤 / 进度 + 暂停·打开</div>
+</div>
+
+<!-- ISLAND C: approval alert -->
+<div style="position:absolute;left:880px;top:3340px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">C · 审批提醒（岛内直接批准）</div>
+  <div style="background:#cdbfe0;border:2.5px solid #3a352f;border-radius:34px;height:560px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:270px;background:#11100e;border:2px solid #d97757;border-radius:26px;padding:14px 16px 15px;z-index:5;box-shadow:0 4px 20px rgba(217,119,87,.4)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#fbe0ee;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+          <img src="assets/mascot-approval.png" alt="小梦" style="width:34px;height:34px;object-fit:contain">
+        </div>
+        <div style="flex:1"><div style="font:700 13px 'Space Mono';color:#fff">api-server</div><div style="font:400 11px 'Patrick Hand';color:#e6c3ab">⚠ 需要你批准</div></div>
+      </div>
+      <div style="background:#000;border-radius:9px;padding:8px 10px;margin-bottom:12px">
+        <div style="font:700 11px 'Space Mono';color:#e6c3ab">git push --force origin main</div>
+      </div>
+      <div style="display:flex;gap:9px">
+        <div style="flex:1;height:38px;border:1.5px solid #4a463f;border-radius:11px;display:flex;align-items:center;justify-content:center;font:700 13px 'Patrick Hand';color:#e8e2d6">拒绝</div>
+        <div style="flex:1;height:38px;background:#d97757;border-radius:11px;display:flex;align-items:center;justify-content:center;font:700 13px 'Patrick Hand';color:#fff">批准</div>
+      </div>
+    </div>
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(40,36,30,.32)"></div>
+  </div>
+  <div style="position:absolute;top:240px;left:30px;font:400 12px 'Patrick Hand';color:#6b6357;background:#fff;border:1.5px dashed #d97757;border-radius:8px;padding:5px 9px;width:150px;line-height:1.35;box-shadow:0 1px 3px rgba(0,0,0,.08)">★ 杀手锏：审批弹到灵动岛，不进 App 就能批准 / 拒绝</div>
+</div>
+
+<!-- ISLAND D: lock screen live activity -->
+<div style="position:absolute;left:1280px;top:3340px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font:400 14px 'Patrick Hand';color:#6b6357">D · 锁屏 Live Activity</div>
+  <div style="border:2.5px solid #3a352f;border-radius:34px;height:560px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.12);background:linear-gradient(165deg,#3a3358 0%,#5c4a5e 55%,#7a5a52 100%)">
+    <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:90px;height:30px;border-radius:16px;background:#11100e"></div>
+    <div style="text-align:center;margin-top:64px">
+      <div style="font:400 13px 'Patrick Hand';color:rgba(255,255,255,.8)">6月25日 星期三</div>
+      <div style="font:400 72px 'Patrick Hand';color:#fff;line-height:1.05;margin-top:2px">9:41</div>
+    </div>
+    <div style="position:absolute;left:16px;right:16px;top:230px;background:rgba(252,248,242,.96);border-radius:20px;padding:15px 16px;box-shadow:0 4px 20px rgba(0,0,0,.25)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:34px;height:34px;border-radius:50%;background:#fbe0ee;display:flex;align-items:center;justify-content:center;overflow:hidden">
+          <img src="assets/mascot-avatar.png" alt="小梦" style="width:30px;height:30px;object-fit:contain">
+        </div>
+        <div style="flex:1"><div style="font:700 13px 'Space Mono';color:#3a352f">api-server</div><div style="font:400 11px 'Patrick Hand';color:#8a8275">编辑 src/App.tsx · 第 12 步</div></div>
+        <span style="display:inline-flex;align-items:center;gap:4px;font:400 11px 'Patrick Hand';color:#b85c3a"><span style="width:6px;height:6px;border-radius:50%;background:#d97757;display:inline-block;animation:pulse 1.3s infinite"></span>运行中</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:13px">
+        <div style="flex:1;height:6px;background:#eee6da;border-radius:3px;overflow:hidden"><div style="width:66%;height:100%;background:#d97757"></div></div>
+        <span style="font:700 11px 'Space Mono';color:#3a352f">12/18</span>
+      </div>
+      <div style="display:flex;gap:9px">
+        <div style="flex:1;height:38px;border:1.5px solid #d8d0c2;border-radius:12px;display:flex;align-items:center;justify-content:center;font:400 13px 'Patrick Hand';color:#6b6357">暂停</div>
+        <div style="flex:1;height:38px;background:#d97757;border-radius:12px;display:flex;align-items:center;justify-content:center;font:700 13px 'Patrick Hand';color:#fff">打开会话</div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;top:520px;left:6px;font:400 12px 'Patrick Hand';color:#6b6357;background:#fff;border:1.5px dashed #c9c0b0;border-radius:8px;padding:5px 9px;width:200px;line-height:1.35;box-shadow:0 1px 3px rgba(0,0,0,.08)">锁屏常驻卡片：进度 + 快捷操作，息屏抬手即见</div>
+</div>
+
+<div style="position:absolute;left:80px;top:3940px;width:300px;background:#fef4a8;padding:14px 15px;font:400 13px 'Patrick Hand';color:#5c5444;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,.08);transform:rotate(-1deg)">灵动岛贯穿一条线：紧凑态瞄一眼 → 长按展开看详情 → 需审批时变赭石描边、岛内直接批/拒；锁屏则常驻 Live Activity 卡片。小梦头像始终在场，强化 IP 记忆。<br><b>注：</b>灵动岛为 iOS 能力，安卓侧对应「常驻通知 + 快捷操作」可做等价实现。</div>
+
+</x-dc>
+</body>
+</html>

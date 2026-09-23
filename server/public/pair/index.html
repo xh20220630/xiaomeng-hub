@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>连接你的设备 · 小梦</title>
+  <link rel="stylesheet" href="/pair/style.css">
+  <script src="/pair/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#connect"><span class="brand-mark">✳</span><span>小梦<small>NIGHTFLIGHT STUDIO</small></span></a>
+    <div class="side-label">你的工作空间</div>
+    <nav aria-label="页面导航">
+      <a class="active" href="#connect"><span>⌘</span>设备连接<span class="nav-dot"></span></a>
+      <a href="#devices"><span>▣</span>已绑定设备</a>
+      <a href="#help"><span>?</span>连接帮助</a>
+    </nav>
+    <div class="side-bottom"><span class="little-star">✧</span><p>灵感，随时在场。</p><small>让电脑上的每一步，<br>都能在手机上继续。</small><div class="local-tag"><i></i>宿主机控制台</div></div>
+  </aside>
+  <main>
+    <header class="topbar"><span>工作空间 <b>/</b> 设备连接</span><span class="private-label">◈ 仅在此电脑管理</span></header>
+    <section class="heading" id="connect"><div><span class="eyebrow">A LITTLE CLOSER.</span><h1>让灵感，<span>连在一起。</span></h1><p>扫一扫，把这台电脑装进口袋。</p></div><div class="host-pill"><i></i><span id="top-host">正在读取宿主机…</span></div></section>
+    <section class="pair-card" aria-labelledby="pair-title">
+      <div class="qr-panel">
+        <div class="section-kicker"><span class="step-dot">01</span> 建立连接</div>
+        <h2 id="pair-title">扫码绑定宿主机</h2><p class="muted">打开小梦 APP，扫描下方二维码</p>
+        <div class="qr-frame" id="qr-frame"><img id="qr-image" alt="用小梦 APP 扫描此二维码绑定宿主机" hidden><div class="qr-placeholder" id="qr-placeholder"><span>⌘</span><p>正在准备连接…</p></div></div>
+        <div class="qr-status" role="status" aria-live="polite"><i id="status-dot"></i><span id="status-text">正在准备二维码</span><span id="countdown"></span></div>
+        <div class="qr-actions"><button id="refresh" class="button secondary" disabled><span>↻</span> 刷新二维码</button><button id="copy" class="text-button" disabled>复制绑定链接 ↗</button></div>
+        <p class="qr-note">每个二维码仅用于绑定一台设备</p>
+      </div>
+      <div class="guide-panel">
+        <div class="connection-art" aria-hidden="true"><div class="orbit"></div><div class="computer"><div class="computer-screen"><span>✳</span></div><div class="computer-foot"></div></div><div class="link-dots">···</div><div class="phone"><span>✓</span></div><span class="art-star">✦</span></div>
+        <span class="eyebrow">FROM DESK TO ANYWHERE</span><h2>电脑的能力，<br>手机上的自由。</h2>
+        <ol class="steps"><li><span>1</span><div><strong>接入同一网络</strong><p>让手机和电脑连接同一个 Wi-Fi 或局域网。</p></div></li><li><span>2</span><div><strong>在小梦中打开扫一扫</strong><p>进入「主机与连接」或「连接设置」，点击扫码。</p></div></li><li><span>3</span><div><strong>确认主机，开始连接</strong><p>核对电脑名称后确认，连接信息会自动保存。</p></div></li></ol>
+        <div class="trust-note"><span>◈</span><p>短时有效 · 独立设备凭据 · 随时解除绑定</p></div>
+      </div>
+    </section>
+    <div class="feedback" id="feedback" role="alert" hidden></div>
+    <section class="agent-summary" aria-label="Agent 接入状态"><div><strong id="agent-status">正在读取 Agent 状态…</strong><p id="agent-hint">手机绑定和 Agent 接入是两个独立状态。</p></div><span id="agent-names"></span></section>
+    <section class="lower-grid">
+      <article class="host-card"><div class="card-title"><h2>这台宿主机</h2><span class="tag">本机</span></div><div class="host-identity"><span class="device-icon">▣</span><div><strong id="host-name">读取中…</strong><small id="host-platform">—</small></div></div><label for="address">手机将连接到</label><select id="address" disabled aria-describedby="address-help"><option>正在查找局域网地址…</option></select><p class="small muted" id="address-help">有多个网卡？选择与手机处于同一网络的地址。</p></article>
+      <article class="devices-card" id="devices"><div class="card-title"><h2>已绑定设备 <span class="device-count" id="device-count">0</span></h2><button id="reload-devices" class="text-button" aria-label="刷新已绑定设备">刷新 ↻</button></div><div id="device-list" aria-live="polite"><div class="empty-state"><span>⌁</span><strong>正在读取设备…</strong></div></div><p class="small muted device-footnote">绑定后可查看任务、发送消息与处理审批，请仅绑定自己的设备。</p></article>
+    </section>
+    <section class="help" id="help"><div><span class="eyebrow">NEED A HAND?</span><h2>连接遇到一点小问题？</h2></div><div class="help-items"><details><summary>扫码后，手机连接不上电脑</summary><p>确认手机和电脑在同一局域网，并选择正确的网卡地址。检查电脑防火墙是否允许后端端口（默认 4820）；访客 Wi-Fi、AP 隔离或 VPN 可能阻止设备互访。二维码不会自动穿透网络。</p></details><details><summary>相机无法使用，如何绑定？</summary><p>在系统设置中为小梦开启相机权限，或点击上方「复制绑定链接」，在手机扫码页选择「粘贴绑定链接」。也可以在 APP 的连接设置里手动填写 IP、端口和访问令牌。</p></details><details><summary>二维码过期，或需要换一台手机</summary><p>点击「刷新二维码」即可重新生成，两分钟内有效。每台手机使用独立凭据；解除绑定会立即断开该设备。刷新二维码不会影响已经绑定的设备。</p></details></div></section>
+    <footer><span>小梦 · NIGHTFLIGHT STUDIO</span><span>在可信局域网内，保持连接。</span></footer>
+  </main>
+  <dialog id="revoke-dialog"><form method="dialog"><span class="eyebrow">DEVICE ACCESS</span><h2>解除这台设备的绑定？</h2><p id="revoke-name"></p><p class="muted">设备将立即断开，需要重新扫码才能连接。</p><div class="dialog-actions"><button class="button secondary" value="cancel">取消</button><button class="button danger" value="confirm">解除绑定</button></div></form></dialog>
+</body>
+</html>

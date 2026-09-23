@@ -1,0 +1,57 @@
+{
+  "icons": [
+    {
+      "name": "conversations",
+      "source": "design\\ui-v3\\refinement\\assets\\icon-conversations-source.png",
+      "output": "app\\assets\\ui-v3\\icon-conversations.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true
+    },
+    {
+      "name": "projects",
+      "source": "design\\ui-v3\\refinement\\assets\\icon-projects-source.png",
+      "output": "app\\assets\\ui-v3\\icon-projects.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true
+    },
+    {
+      "name": "inbox",
+      "source": "design\\ui-v3\\refinement\\assets\\icon-inbox-source.png",
+      "output": "app\\assets\\ui-v3\\icon-inbox.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true
+    },
+    {
+      "name": "archive",
+      "source": "design\\ui-v3\\refinement\\assets\\icon-archive-source.png",
+      "output": "app\\assets\\ui-v3\\icon-archive.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true
+    },
+    {
+      "name": "agents",
+      "source": "design\\ui-v3\\refinement\\assets\\icon-agents-source.png",
+      "output": "app\\assets\\ui-v3\\icon-agents.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true
+    },
+    {
+      "name": "settings",
+      "source": "design\\ui-v3\\refinement\\assets\\icon-settings-source.png",
+      "output": "app\\assets\\ui-v3\\icon-settings.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true
+    }
+  ],
+  "covers": [
+    "project-ip-studio.png",
+    "project-ip-orbit.png"
+  ],
+  "navigation": "16-frame scale transition; original independent PNGs retained"
+}

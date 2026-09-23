@@ -1,0 +1,285 @@
+{
+  "design_source": "design/ui-v3/01-conversations.png",
+  "assets": [
+    {
+      "file": "hero-orbit.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "format": "PNG RGBA",
+      "transparent": true,
+      "purpose": "Conversation home hero, complete ceramic mascot and orbital ring, dark or light background",
+      "source": "design/ui-v3/assets/hero-clean.png",
+      "design_source": "design/ui-v3/01-conversations.png",
+      "source_content_bounds": [
+        47,
+        140,
+        1214,
+        1085
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_percent": 69.33,
+      "partial_alpha_percent": 1.59,
+      "opaque_percent": 29.08,
+      "border_alpha_max": 0,
+      "bytes": 462828,
+      "source_crop": null
+    },
+    {
+      "file": "mascot-avatar.png",
+      "size": [
+        320,
+        320
+      ],
+      "format": "PNG RGBA",
+      "transparent": true,
+      "purpose": "Matching Xiaomeng head avatar, conversation message avatar and account avatar",
+      "source": "design/ui-v3/assets/avatar-clean.png",
+      "design_source": "design/ui-v3/01-conversations.png",
+      "source_content_bounds": [
+        218,
+        215,
+        1103,
+        1094
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_percent": 46.16,
+      "partial_alpha_percent": 3.2,
+      "opaque_percent": 50.64,
+      "border_alpha_max": 0,
+      "bytes": 64870,
+      "source_crop": null
+    },
+    {
+      "file": "empty-state.png",
+      "size": [
+        512,
+        512
+      ],
+      "format": "PNG RGBA",
+      "transparent": true,
+      "purpose": "Compact optimistic empty state mascot, complete seated body without ring",
+      "source": "design/ui-v3/assets/empty-clean.png",
+      "design_source": "design/ui-v3/01-conversations.png",
+      "source_content_bounds": [
+        284,
+        125,
+        1001,
+        1125
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_percent": 62.0,
+      "partial_alpha_percent": 1.9,
+      "opaque_percent": 36.1,
+      "border_alpha_max": 0,
+      "bytes": 129029,
+      "source_crop": null
+    },
+    {
+      "file": "project-art.png",
+      "size": [
+        768,
+        768
+      ],
+      "format": "PNG RGBA",
+      "transparent": true,
+      "purpose": "Projects header ceramic folder and lime star",
+      "source": "design/ui-v3/assets/project-clean.png",
+      "design_source": "design/ui-v3/02-projects.png",
+      "source_content_bounds": [
+        158,
+        142,
+        1122,
+        1085
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_percent": 39.37,
+      "partial_alpha_percent": 1.57,
+      "opaque_percent": 59.06,
+      "border_alpha_max": 0,
+      "bytes": 376555,
+      "source_crop": null
+    },
+    {
+      "file": "inbox-art.png",
+      "size": [
+        768,
+        768
+      ],
+      "format": "PNG RGBA",
+      "transparent": true,
+      "purpose": "Inbox header ceramic mailbox and lime envelope",
+      "source": "design/ui-v3/assets/inbox-clean.png",
+      "design_source": "design/ui-v3/03-inbox.png",
+      "source_content_bounds": [
+        138,
+        227,
+        1118,
+        1004
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_percent": 50.67,
+      "partial_alpha_percent": 1.56,
+      "opaque_percent": 47.76,
+      "border_alpha_max": 0,
+      "bytes": 334809,
+      "source_crop": null
+    },
+    {
+      "file": "archive-art.png",
+      "size": [
+        768,
+        768
+      ],
+      "format": "PNG RGBA",
+      "transparent": true,
+      "purpose": "Archive header ceramic storage box with mint glass lid",
+      "source": "design/ui-v3/assets/archive-clean.png",
+      "design_source": "design/ui-v3/04-archive.png",
+      "source_content_bounds": [
+        243,
+        278,
+        1140,
+        1025
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_percent": 51.59,
+      "partial_alpha_percent": 1.36,
+      "opaque_percent": 47.05,
+      "border_alpha_max": 0,
+      "bytes": 330210,
+      "source_crop": null
+    },
+    {
+      "file": "project-cover-mint.png",
+      "size": [
+        768,
+        768
+      ],
+      "format": "PNG RGB",
+      "transparent": false,
+      "purpose": "Project card cover, frosted mint glass cubes with intentionally retained scene background and shadow",
+      "source": "design/ui-v3/assets/project-cover-mint-source.png",
+      "design_source": "design/ui-v3/02-projects.png",
+      "source_content_bounds": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        255,
+        255
+      ],
+      "transparent_percent": 0.0,
+      "partial_alpha_percent": 0.0,
+      "opaque_percent": 100.0,
+      "border_alpha_max": 255,
+      "bytes": 470861,
+      "source_crop": null
+    },
+    {
+      "file": "project-cover-orbit.png",
+      "size": [
+        768,
+        768
+      ],
+      "format": "PNG RGB",
+      "transparent": false,
+      "purpose": "Project card cover, satin chrome orbital planet with intentionally retained scene background and shadow",
+      "source": "design/ui-v3/assets/project-cover-orbit-source.png",
+      "design_source": "design/ui-v3/02-projects.png",
+      "source_content_bounds": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        255,
+        255
+      ],
+      "transparent_percent": 0.0,
+      "partial_alpha_percent": 0.0,
+      "opaque_percent": 100.0,
+      "border_alpha_max": 255,
+      "bytes": 471532,
+      "source_crop": null
+    },
+    {
+      "file": "agents-art.png",
+      "size": [
+        768,
+        768
+      ],
+      "format": "PNG RGBA",
+      "transparent": true,
+      "purpose": "Agents and devices header, ivory desktop monitor with lime orbital display",
+      "source": "design/ui-v3/assets/agents-clean.png",
+      "design_source": "design/ui-v3/05-agents.png",
+      "source_content_bounds": [
+        171,
+        127,
+        1101,
+        1091
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_percent": 40.35,
+      "partial_alpha_percent": 1.75,
+      "opaque_percent": 57.89,
+      "border_alpha_max": 0,
+      "bytes": 396808,
+      "source_crop": null
+    },
+    {
+      "file": "settings-art.png",
+      "size": [
+        768,
+        768
+      ],
+      "format": "PNG RGBA",
+      "transparent": true,
+      "purpose": "Connection settings header, interlocked mint glass and graphite links with transparent holes",
+      "source": "design/ui-v3/assets/settings-clean.png",
+      "design_source": "design/ui-v3/06-settings.png",
+      "source_content_bounds": [
+        184,
+        89,
+        1078,
+        1178
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "transparent_percent": 54.49,
+      "partial_alpha_percent": 1.9,
+      "opaque_percent": 43.61,
+      "border_alpha_max": 0,
+      "bytes": 524344,
+      "source_crop": null
+    }
+  ]
+}

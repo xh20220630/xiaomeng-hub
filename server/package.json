@@ -1,0 +1,26 @@
+{
+  "name": "claude-monitor-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "LAN agent task monitoring and remote operations platform with a Claude Code adapter.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/index.js",
+    "host": "node --disable-warning=ExperimentalWarning scripts/start-host.mjs",
+    "dev": "node --watch --disable-warning=ExperimentalWarning src/index.js",
+    "sample": "node --disable-warning=ExperimentalWarning scripts/send-sample.mjs",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.mjs",
+    "agent:demo": "node scripts/demo-agent.mjs",
+    "agent:codex": "node scripts/codex-agent.mjs",
+    "agent:connect": "node scripts/connect-hub.mjs"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "qrcode": "^1.5.4",
+    "ws": "^8.18.0"
+  }
+}

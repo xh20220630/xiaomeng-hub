@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body { margin:0; background:#f4f1ea; color:#2c2823; font-family:'Noto Sans SC',sans-serif; -webkit-font-smoothing:antialiased; }
+.doc { box-sizing:border-box; max-width:8.5in; margin:0 auto; background:#fff; padding:64px clamp(24px,5vw,0.85in) 96px; box-shadow:0 2px 24px rgba(0,0,0,.08); }
+.doc-frame { width:100%; border-collapse:collapse; }
+.doc-frame td { padding:0; }
+.hdr-space, .ftr-space { display:none; }
+.doc h1 { font-size:30px; font-weight:900; letter-spacing:-.01em; margin:0 0 6px; text-wrap:balance; color:#1f1b16; }
+.doc h2 { font-size:20px; font-weight:900; margin:42px 0 14px; padding-bottom:9px; border-bottom:2.5px solid #d97757; color:#1f1b16; text-wrap:balance; }
+.doc h3 { font-size:16px; font-weight:700; margin:26px 0 9px; color:#b3551f; text-wrap:balance; }
+.doc h4 { font-size:14px; font-weight:700; margin:18px 0 7px; color:#2c2823; }
+.doc p, .doc li { font-size:14.5px; line-height:1.72; text-wrap:pretty; color:#3a352d; }
+.doc ul, .doc ol { padding-left:22px; margin:9px 0; }
+.doc li { margin:5px 0; }
+.doc code { font-family:'Space Mono',monospace; font-size:12.5px; background:#f3ede2; color:#9a3f12; padding:1.5px 6px; border-radius:5px; }
+.doc strong { font-weight:700; color:#1f1b16; }
+.lead { font-size:15.5px; color:#6b6357; line-height:1.7; margin:0 0 4px; }
+.meta { font-size:12.5px; color:#8a8275; font-family:'Space Mono',monospace; margin-top:10px; }
+.tag { display:inline-block; font-size:11px; font-weight:700; font-family:'Space Mono',monospace; padding:2px 9px; border-radius:20px; vertical-align:middle; margin-left:8px; }
+.tag.p0 { background:#d97757; color:#fff; }
+.tag.p1 { background:#f3ddd1; color:#9a3f12; }
+.tag.p2 { background:#eee7da; color:#6b6357; }
+table.t { width:100%; border-collapse:collapse; margin:14px 0; font-size:13px; }
+table.t th { background:#2c2823; color:#fff; text-align:left; padding:9px 11px; font-weight:700; font-size:12.5px; }
+table.t td { border:1px solid #e6dfd2; padding:9px 11px; vertical-align:top; line-height:1.55; color:#3a352d; }
+table.t tr:nth-child(even) td { background:#faf7f1; }
+table.t code { font-size:11.5px; }
+.callout { background:#faf2ec; border-left:4px solid #d97757; border-radius:0 10px 10px 0; padding:13px 16px; margin:16px 0; }
+.callout p { margin:0; font-size:13.5px; color:#5c5044; }
+.callout .k { font-weight:700; color:#b3551f; }
+.story { background:#f6f8f4; border:1px solid #dde7d6; border-radius:10px; padding:12px 15px; margin:11px 0; }
+.story p { margin:0; font-size:13.5px; color:#41513a; line-height:1.6; }
+.divider { height:1px; background:#e6dfd2; margin:34px 0; border:0; }
+.toc { background:#faf7f1; border:1px solid #e6dfd2; border-radius:12px; padding:16px 20px; margin:22px 0 8px; }
+.toc p { margin:3px 0; font-size:13.5px; color:#3a352d; }
+.toc .n { font-family:'Space Mono',monospace; color:#b3551f; font-weight:700; margin-right:8px; }
+@page { size:letter; margin:0; }
+@media print {
+  html { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  html, body { margin:0; padding:0; background:#fff; }
+  .doc { max-width:none !important; margin:0 !important; padding:0 0.75in !important; box-shadow:none !important; }
+  .hdr-space, .ftr-space { display:table-cell; height:0.7in; }
+  h1,h2,h3,h4 { break-after:avoid; }
+  table.t, .callout, .story, figure, pre, tr { break-inside:avoid; }
+  p, li { orphans:3; widows:3; }
+  .screen-only { display:none !important; }
+}
+</style>
+</helmet>
+
+<main class="doc">
+  <table class="doc-frame" role="presentation">
+    <thead><tr><td class="hdr-space"></td></tr></thead>
+    <tbody><tr><td>
+
+      <h1>Claude 任务管理器 · 新功能开发需求文档</h1>
+      <p class="lead">面向移动端（Flutter）的 Claude Code 多项目实时监控与远程审批能力。本文档覆盖原型中全部新功能的产品需求、数据模型、通信协议、平台实现与验收标准，供研发直接落地。</p>
+      <p class="meta">版本 v1.0 · 2026-06-25 · 状态：待评审 · 适用端：Android（主）/ iOS / 现有 Flutter 工程 claude_monitor</p>
+
+      <div class="toc">
+        <p><span class="n">01</span>背景与目标</p>
+        <p><span class="n">02</span>名词定义与角色</p>
+        <p><span class="n">03</span>技术架构与现状</p>
+        <p><span class="n">04</span>数据模型变更</p>
+        <p><span class="n">05</span>通信协议与服务端需求</p>
+        <p><span class="n">06</span>功能需求 F1 — 首页 · 项目总览</p>
+        <p><span class="n">07</span>功能需求 F2 — 项目详情 · 对话与任务流转</p>
+        <p><span class="n">08</span>功能需求 F3 — 审批抽屉</p>
+        <p><span class="n">09</span>功能需求 F4 — 灵动岛 Live Activity</p>
+        <p><span class="n">10</span>功能需求 F5 — 锁屏 Live Activity / 安卓常驻通知</p>
+        <p><span class="n">11</span>功能需求 F6 — IP 形象「小梦」状态系统</p>
+        <p><span class="n">12</span>任务状态机</p>
+        <p><span class="n">13</span>非功能需求</p>
+        <p><span class="n">14</span>验收标准与里程碑</p>
+      </div>
+
+      <h2>01 · 背景与目标</h2>
+      <p>开发者在本机运行多个 Claude Code 会话执行编码任务。任务常需长时间运行，并在关键节点（执行危险命令、修改文件）请求人工批准。开发者无法一直盯着电脑，导致任务卡在审批环节空等。</p>
+      <p>本项目在现有 <code>claude_monitor</code> 应用基础上扩展，使开发者能在手机上：</p>
+      <ul>
+        <li><strong>总览全部项目</strong>：一屏看到本机所有 Claude Code 项目及其实时状态。</li>
+        <li><strong>进入项目对话</strong>：查看历史对话、工具调用与任务状态流转。</li>
+        <li><strong>远程审批</strong>：当任务请求批准时，在 App、灵动岛或锁屏直接批准 / 拒绝，任务立即继续。</li>
+        <li><strong>无需打开 App 即可处理</strong>：通过灵动岛 / 锁屏 Live Activity（iOS）或常驻通知（Android）完成最高频的「批准」动作。</li>
+      </ul>
+      <div class="callout"><p><span class="k">核心目标：</span>把「开发者必须回到电脑前才能让任务继续」缩短为「在手机上一次点击即可放行」，将平均审批等待时间降到分钟级以内。</p></div>
+
+      <h2>02 · 名词定义与角色</h2>
+      <table class="t">
+        <thead><tr><th style="width:130px">名词</th><th>定义</th></tr></thead>
+        <tbody>
+          <tr><td><strong>项目 Project</strong></td><td>一个 Claude Code 工作目录（<code>cwd</code>）。一个项目在同一时刻通常对应一个活跃会话，是首页卡片的聚合单位。</td></tr>
+          <tr><td><strong>会话 Session</strong></td><td>一次 Claude Code 运行实例，含唯一 <code>sessionId</code>。沿用现有模型。</td></tr>
+          <tr><td><strong>任务事件 TaskEvent</strong></td><td>会话生命周期中的一条事件（开始 / 工具调用 / 需审批 / 完成等），即对话与时间线的数据源。</td></tr>
+          <tr><td><strong>审批请求 Approval</strong></td><td>会话在执行命令或修改文件前发起的待人工确认动作，需用户回传「批准 / 拒绝」。</td></tr>
+          <tr><td><strong>小梦 KEKE/MENG</strong></td><td>App 的 IP 形象，以表情反映任务状态，贯穿全端。</td></tr>
+          <tr><td><strong>桥接服务 Bridge</strong></td><td>运行在开发者本机、接收 Claude Code Hook 事件并通过 WebSocket 推送给 App 的服务（现有 webhook server，默认端口 4820）。</td></tr>
+        </tbody>
+      </table>
+
+      <h2>03 · 技术架构与现状</h2>
+      <p>现有工程为 Flutter + Riverpod，关键现状如下，新功能在此之上扩展，不做整体重构：</p>
+      <ul>
+        <li><strong>状态管理</strong>：Riverpod。<code>monitor.dart</code> 持有会话与事件，负责接入 WebSocket 与 REST 初始加载；<code>settings.dart</code> 用 SharedPreferences 持久化服务器地址。</li>
+        <li><strong>通信</strong>：<code>ws_service.dart</code> 维护 WebSocket（含指数退避重连）；<code>api_service.dart</code> 提供 REST 初次加载 / 重同步。</li>
+        <li><strong>页面</strong>：仪表盘、会话详情、设置三屏。</li>
+        <li><strong>模型</strong>：<code>Session</code> 与 <code>TaskEvent</code>，对应桥接服务的数据行。</li>
+        <li><strong>主题</strong>：Material 3 深色主题。本次新增视觉采用 Claude Code 暖色系统（赭石 <code>#D97757</code>、纸色 <code>#FAF7F1</code>、墨色 <code>#2C2823</code>）。</li>
+      </ul>
+      <div class="callout"><p><span class="k">实现前提：</span>新功能依赖桥接服务支持「双向通信」——不仅推送事件，还要接收 App 回传的审批结果。第 05 节定义所需协议扩展，需与桥接服务一并开发。</p></div>
+
+      <h2>04 · 数据模型变更</h2>
+      <p>在现有 <code>Session</code> / <code>TaskEvent</code> 基础上，新增 <code>Project</code> 聚合与 <code>Approval</code> 结构。</p>
+
+      <h3>4.1 Project（新增聚合）</h3>
+      <p>首页以项目为单位展示。客户端可由会话流按 <code>cwd</code> 聚合得出，或由桥接服务直接下发。建议服务端下发以减少端上逻辑。</p>
+      <table class="t">
+        <thead><tr><th style="width:150px">字段</th><th style="width:120px">类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>projectId</code></td><td>String</td><td>项目唯一标识（建议为 <code>cwd</code> 的哈希）。</td></tr>
+          <tr><td><code>name</code></td><td>String</td><td>展示名（如 <code>api-server</code>），取 <code>cwd</code> 末级目录名。</td></tr>
+          <tr><td><code>cwd</code></td><td>String</td><td>工作目录绝对路径。</td></tr>
+          <tr><td><code>status</code></td><td>Enum</td><td>聚合状态：<code>running</code> / <code>needs_approval</code> / <code>waiting_input</code> / <code>done</code> / <code>ended</code> / <code>error</code>。见第 12 节。</td></tr>
+          <tr><td><code>activeSessionId</code></td><td>String?</td><td>当前活跃会话。</td></tr>
+          <tr><td><code>summary</code></td><td>String?</td><td>一句话进度（如「编辑 src/App.tsx — 第 12 步」）。</td></tr>
+          <tr><td><code>progress</code></td><td>{done,total}?</td><td>步骤进度，用于进度条与灵动岛 <code>12/18</code>。</td></tr>
+          <tr><td><code>pendingApproval</code></td><td>Approval?</td><td>非空表示有待处理审批，决定首页置顶与岛/锁屏告警。</td></tr>
+          <tr><td><code>lastEventAt</code></td><td>int (ms)</td><td>最后活动时间，用于排序与「x 分钟前」。</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4.2 Approval（新增）</h3>
+      <table class="t">
+        <thead><tr><th style="width:150px">字段</th><th style="width:120px">类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>approvalId</code></td><td>String</td><td>审批唯一 ID，回传时携带。</td></tr>
+          <tr><td><code>sessionId</code></td><td>String</td><td>所属会话。</td></tr>
+          <tr><td><code>kind</code></td><td>Enum</td><td><code>command</code>（命令）/ <code>file_edit</code>（文件修改）。决定抽屉样式。</td></tr>
+          <tr><td><code>title</code></td><td>String</td><td>如「执行命令」「修改文件」。</td></tr>
+          <tr><td><code>command</code></td><td>String?</td><td>kind=command 时的命令文本。</td></tr>
+          <tr><td><code>filePath</code></td><td>String?</td><td>kind=file_edit 时的文件路径。</td></tr>
+          <tr><td><code>diff</code></td><td>String?</td><td>kind=file_edit 时的 diff（统一 diff 格式）。</td></tr>
+          <tr><td><code>risk</code></td><td>Enum?</td><td><code>danger</code> / <code>normal</code>，<code>danger</code> 显示醒目警告（如 force push）。</td></tr>
+          <tr><td><code>options</code></td><td>String[]</td><td>可选权限档位：<code>once</code> / <code>always</code> / <code>reject</code>。</td></tr>
+          <tr><td><code>createdAt</code></td><td>int (ms)</td><td>发起时间，用于超时处理。</td></tr>
+        </tbody>
+      </table>
+
+      <h2>05 · 通信协议与服务端需求</h2>
+      <p>沿用现有 WebSocket 通道，扩展消息类型。<strong>所有消息为 JSON，含顶层 <code>type</code> 字段。</strong></p>
+
+      <h3>5.1 服务端 → App（下行）</h3>
+      <table class="t">
+        <thead><tr><th style="width:160px">type</th><th>载荷</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>projects.snapshot</code></td><td><code>Project[]</code></td><td>连接 / 重连后全量同步，渲染首页。</td></tr>
+          <tr><td><code>project.update</code></td><td><code>Project</code></td><td>单项目状态变化，增量刷新卡片与灵动岛。</td></tr>
+          <tr><td><code>event.append</code></td><td><code>TaskEvent</code></td><td>新增一条对话 / 工具调用事件，追加到详情。</td></tr>
+          <tr><td><code>approval.request</code></td><td><code>Approval</code></td><td>发起审批 → 弹抽屉 + 推送 + 灵动岛/锁屏告警。</td></tr>
+          <tr><td><code>approval.resolved</code></td><td><code>{approvalId, by}</code></td><td>审批已在别处处理（如电脑端），端上收起对应 UI，避免重复。</td></tr>
+        </tbody>
+      </table>
+
+      <h3>5.2 App → 服务端（上行）<span class="tag p0">关键新增</span></h3>
+      <table class="t">
+        <thead><tr><th style="width:160px">type</th><th>载荷</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>approval.respond</code></td><td><code>{approvalId, decision, scope}</code></td><td><code>decision</code>: <code>approve</code>/<code>reject</code>；<code>scope</code>: <code>once</code>/<code>always</code>。桥接服务据此放行或中止 Claude Code。</td></tr>
+          <tr><td><code>message.send</code></td><td><code>{sessionId, text}</code></td><td>用户在详情页回复 Claude（输入框）。</td></tr>
+          <tr><td><code>session.control</code></td><td><code>{sessionId, action}</code></td><td><code>action</code>: <code>pause</code>/<code>resume</code>/<code>open</code>，供灵动岛 / 锁屏快捷操作。</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><p><span class="k">幂等与时效：</span>审批回传需幂等（同一 <code>approvalId</code> 多次响应只生效一次）；超过 <code>createdAt</code> 一定时长（建议可配置，默认 30 分钟）的审批标记为过期，App 端禁用按钮并提示「已过期，请回电脑处理」。</p></div>
+
+      <h2>06 · 功能需求 F1 — 首页 · 项目总览 <span class="tag p0">P0</span></h2>
+      <p>替换现有仪表盘，以「按状态分组、优先级排序」呈现本机全部 Claude Code 项目。对应原型「方案 B」。</p>
+      <div class="story"><p><strong>用户故事：</strong>作为开发者，我打开 App 第一眼就能看到「有没有事要我处理」，最紧急的审批永远在最上面，进行中和已完成的项目一目了然。</p></div>
+      <h3>6.1 布局与分组（自上而下）</h3>
+      <ul>
+        <li><strong>顶栏</strong>：左侧「小梦」头像图标 + 标题「我的项目」；右侧连接状态徽标（已连接 / 重连中 / 离线），数据源自 <code>ws_service</code> 的 <code>WsStatus</code>。</li>
+        <li><strong>需要你处理</strong>：含 <code>pendingApproval</code> 的项目，赭石描边卡片 + 小梦审批表情 + 红点计数；整组置顶。点击进入对应项目详情。</li>
+        <li><strong>进行中</strong>：<code>status=running</code> 的项目，显示一句话进度 + 脉冲点。</li>
+        <li><strong>今日完成</strong>：<code>done</code>/<code>ended</code> 项目，紧凑列表 + 结果摘要（如「✓ 7 任务」「✓ 已部署」）。</li>
+      </ul>
+      <h3>6.2 交互与规则</h3>
+      <ul>
+        <li>整卡片可点击 → 进入项目详情（F2），转场为水平滑入。</li>
+        <li>分组标题显示实时计数；某组为空时整组隐藏。</li>
+        <li>状态变化经 <code>project.update</code> 增量刷新，卡片在组间移动需有动效（如审批完成后从顶部移入「进行中」）。</li>
+        <li>下拉刷新触发 <code>projects.snapshot</code> 重同步。</li>
+        <li>离线时顶栏置灰并显示「未连接」，卡片数据保留为最后已知状态。</li>
+      </ul>
+
+      <h2>07 · 功能需求 F2 — 项目详情 · 对话与任务流转 <span class="tag p0">P0</span></h2>
+      <p>聊天式界面，复刻 Claude Code 的对话观感，叠加顶部任务步骤条。对应原型「方案 A」。</p>
+      <div class="story"><p><strong>用户故事：</strong>作为开发者，我能像看聊天记录一样回看 Claude 做了什么、跑了哪些命令、改了哪些文件，并随时知道任务进行到哪一步。</p></div>
+      <h3>7.1 顶部任务步骤条</h3>
+      <ul>
+        <li>四阶段：<strong>规划 → 执行 → 审批 → 完成</strong>，始终可见、吸顶。</li>
+        <li>每个节点三态：已完成（绿勾）/ 进行中（赭石实心 + 光环）/ 未开始（灰描边，未来步骤虚线）。</li>
+        <li>审批被拒时，「审批」节点转为暗红 ✕、「完成」保持虚线（任务暂停）。状态映射见第 12 节。</li>
+      </ul>
+      <h3>7.2 对话消息类型</h3>
+      <table class="t">
+        <thead><tr><th style="width:140px">类型</th><th>渲染</th></tr></thead>
+        <tbody>
+          <tr><td>Claude 文本</td><td>左侧浅色气泡 + 小梦头像。</td></tr>
+          <tr><td>用户文本</td><td>右侧赭石浅色气泡。</td></tr>
+          <tr><td>工具调用 Bash</td><td>深色代码块，标题 <code>⚙ Bash · 命令</code>，下方输出（成功绿 / 失败红）。</td></tr>
+          <tr><td>工具调用 Edit</td><td>深色块，标题 <code>✎ Edit · 文件</code>，显示 <code>+增 −删</code> 行数。</td></tr>
+          <tr><td>系统状态条</td><td>居中胶囊：「等待审批」「已批准」「已拒绝」等里程碑。</td></tr>
+        </tbody>
+      </table>
+      <h3>7.3 交互</h3>
+      <ul>
+        <li>消息区按时间正序，支持上滑回看历史；新事件经 <code>event.append</code> 实时追加并自动滚到底（用户上滑查看历史时不强制打断）。</li>
+        <li>「等待审批」状态条可点击 → 打开审批抽屉（F3）。</li>
+        <li>底部输入框回复 Claude → 发送 <code>message.send</code>。</li>
+        <li>返回键回到首页。</li>
+      </ul>
+
+      <h2>08 · 功能需求 F3 — 审批抽屉 <span class="tag p0">P0</span></h2>
+      <p>从详情页底部弹出的模态抽屉，背景压暗，承载最高频的审批动作。对应原型「方案 A（命令审批）」，并兼容文件修改型。</p>
+      <div class="story"><p><strong>用户故事：</strong>作为开发者，当 Claude 要执行危险命令时，我能立刻看到是什么命令、风险在哪，一键批准或拒绝。</p></div>
+      <h3>8.1 命令审批（kind=command）</h3>
+      <ul>
+        <li>小梦审批表情 + 标题「小梦需要你批准」+ 项目名与动作。</li>
+        <li>深色代码块展示 <code>command</code> 全文。</li>
+        <li><code>risk=danger</code> 时显示警告条（如「强制推送会覆盖远端历史，不可撤销」）。</li>
+        <li>两个动作：<strong>拒绝</strong>（描边）/ <strong>批准并执行</strong>（赭石实心）。</li>
+        <li>复选项「本次会话内始终允许此类命令」→ 决定回传 <code>scope=always</code>。</li>
+      </ul>
+      <h3>8.2 文件修改审批（kind=file_edit）</h3>
+      <ul>
+        <li>显示文件路径 + diff（增行绿、删行红）。</li>
+        <li>三档单选：<strong>仅本次允许</strong> / <strong>始终允许编辑此文件</strong> / <strong>拒绝并说明原因</strong>，对齐 Claude Code 权限模型。</li>
+        <li>「查看完整 diff」可展开。</li>
+      </ul>
+      <h3>8.3 通用规则</h3>
+      <ul>
+        <li>点击动作 → 发送 <code>approval.respond</code>；成功后抽屉收起、详情追加结果状态条、步骤条推进。</li>
+        <li>若收到 <code>approval.resolved</code>（已在电脑端处理），自动收起并提示「已在其他设备处理」。</li>
+        <li>审批过期 → 按钮禁用 + 过期提示。</li>
+        <li>抽屉可点击背景或下滑关闭（不等于拒绝，仅暂不处理）。</li>
+      </ul>
+
+      <h2>09 · 功能需求 F4 — 灵动岛 Live Activity（iOS） <span class="tag p1">P1</span></h2>
+      <p>让任务状态常驻系统级灵动岛，无需打开 App 即可瞄进度、收审批。iOS 16.1+ 通过 ActivityKit 实现。</p>
+      <div class="story"><p><strong>用户故事：</strong>作为开发者，我在用别的 App 时，灵动岛就能告诉我任务跑到哪了；要审批时它变橙，我点一下就能批准。</p></div>
+      <table class="t">
+        <thead><tr><th style="width:120px">状态</th><th>紧凑态</th><th>展开态（长按）</th></tr></thead>
+        <tbody>
+          <tr><td><strong>运行中</strong></td><td>脉冲点 + 进度 <code>12/18</code> + 小梦头像。</td><td>项目名 + 当前步骤 + 进度条 + 「收起 / 打开」。</td></tr>
+          <tr><td><strong>需审批</strong></td><td>橙色发光描边 + 「需批准」+ 小梦审批脸。</td><td>命令文本 + <strong>「拒绝 / 批准」按钮（岛内直接处理）</strong>。</td></tr>
+          <tr><td><strong>已完成</strong></td><td>绿点 + <code>18/18</code> + 小梦开心脸。</td><td>完成摘要 + 「打开会话」。</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>岛内「批准 / 拒绝」走 <code>approval.respond</code>，与 App 内抽屉<strong>共享同一状态</strong>：任一处处理后，另一处实时同步。</li>
+        <li>「打开 / 打开会话」深链直达对应项目详情（F2）。</li>
+        <li>Live Activity 内容随 <code>project.update</code> / <code>approval.request</code> 通过 push token 远程更新（APNs Live Activity push）。</li>
+      </ul>
+      <div class="callout"><p><span class="k">平台约束：</span>灵动岛按钮交互依赖 App Intents（iOS 17+）；iOS 16 仅支持点击进入 App。Live Activity 远程更新需后端具备 APNs 推送能力，需在桥接服务或中转后端实现。</p></div>
+
+      <h2>10 · 功能需求 F5 — 锁屏 Live Activity / 安卓常驻通知 <span class="tag p1">P1</span></h2>
+      <h3>10.1 iOS 锁屏 Live Activity</h3>
+      <ul>
+        <li>锁屏常驻卡片：小梦头像 + 项目名 + 一句话状态 + 进度条 + 快捷操作。</li>
+        <li>运行 / 完成态：「关闭 / 打开会话」；需审批态：命令 + 「拒绝 / 批准并执行」。</li>
+        <li>与灵动岛、App 内抽屉同源状态，息屏抬手即见、可直接批准。</li>
+      </ul>
+      <h3>10.2 Android 等价实现 <span class="tag p1">P1</span></h3>
+      <p>Android 无灵动岛，用以下能力达成等价体验：</p>
+      <ul>
+        <li><strong>常驻前台通知</strong>（ongoing notification）展示进度条 + 状态，对应「紧凑/锁屏」体验。</li>
+        <li><strong>通知快捷操作按钮</strong>「批准 / 拒绝」，通过 Notification Action 直接回传 <code>approval.respond</code>，无需进入 App。</li>
+        <li>需审批时升级为 <strong>高优先级 + 提示音/震动</strong> 的 Heads-up 通知。</li>
+        <li>沿用现有 <code>services/notifications</code> 工厂，扩展带 action 的通知构建与回调处理。</li>
+      </ul>
+
+      <h2>11 · 功能需求 F6 — IP 形象「小梦」状态系统 <span class="tag p2">P2</span></h2>
+      <p>统一的角色资产，以表情映射任务状态，强化品牌记忆并降低状态识别成本。</p>
+      <table class="t">
+        <thead><tr><th style="width:150px">资产</th><th style="width:150px">对应状态</th><th>使用位置</th></tr></thead>
+        <tbody>
+          <tr><td>主视觉立绘</td><td>—</td><td>启动页、关于页、空状态。</td></tr>
+          <tr><td>头像（半身）</td><td>通用</td><td>首页标题、聊天气泡、卡片头像。</td></tr>
+          <tr><td>运行中表情</td><td><code>running</code></td><td>进行中卡片、灵动岛、通知。</td></tr>
+          <tr><td>审批表情</td><td><code>needs_approval</code></td><td>需处理卡片、抽屉、岛/锁屏告警。</td></tr>
+          <tr><td>完成表情</td><td><code>done</code></td><td>完成态卡片、岛/锁屏。</td></tr>
+          <tr><td>出错/离线表情</td><td><code>error</code>/<code>idle</code></td><td>拒绝后、连接断开、空闲。</td></tr>
+          <tr><td>App 图标</td><td>—</td><td>桌面图标、应用商店。</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>资产以透明 PNG 提供（≥1024px），已随项目交付，按状态枚举映射，禁止在不匹配状态混用。</li>
+        <li>建议封装 <code>MascotImage(status)</code> 组件统一取图，便于后续替换为 Lottie 动效。</li>
+      </ul>
+
+      <h2>12 · 任务状态机</h2>
+      <p>项目 / 会话状态统一收敛为下列枚举，驱动所有 UI（卡片、步骤条、岛、锁屏、小梦表情）。</p>
+      <table class="t">
+        <thead><tr><th style="width:150px">状态</th><th style="width:130px">步骤条</th><th>触发 / 含义</th></tr></thead>
+        <tbody>
+          <tr><td><code>running</code> 运行中</td><td>执行（进行中）</td><td>会话正在执行任务。</td></tr>
+          <tr><td><code>needs_approval</code> 需审批</td><td>审批（进行中）</td><td>收到 <code>approval.request</code>，等待用户决定。</td></tr>
+          <tr><td><code>waiting_input</code> 等待输入</td><td>执行（暂停）</td><td>Claude 需要用户补充信息。</td></tr>
+          <tr><td><code>done</code> 已完成</td><td>完成（绿勾）</td><td>批准后任务成功结束。</td></tr>
+          <tr><td><code>rejected/paused</code> 已拒绝/暂停</td><td>审批（暗红 ✕）</td><td>用户拒绝，任务暂停等待后续指令。</td></tr>
+          <tr><td><code>ended</code> 已结束</td><td>完成</td><td>会话正常终止。</td></tr>
+          <tr><td><code>error</code> 出错/离线</td><td>当前步置错误</td><td>会话异常或桥接断连。</td></tr>
+        </tbody>
+      </table>
+      <p>关键流转：<code>running</code> → <code>needs_approval</code> →（批准）<code>running</code> → <code>done</code>；或 →（拒绝）<code>paused</code>。所有端在收到 <code>approval.respond</code> 的回执后必须同步刷新。</p>
+
+      <h2>13 · 非功能需求</h2>
+      <ul>
+        <li><strong>实时性</strong>：事件从桥接到端上展示延迟 &lt; 1s（同局域网）。</li>
+        <li><strong>连接韧性</strong>：沿用 WebSocket 指数退避重连；重连后必须 <code>projects.snapshot</code> 全量校正，避免状态漂移。</li>
+        <li><strong>离线表现</strong>：断连时保留最后已知状态并明确标识；审批按钮在断连时禁用。</li>
+        <li><strong>安全</strong>：审批是高危操作，上行通道需鉴权（建议配对 token / 局域网内一次性配对码）；审批回传需幂等 + 时效校验，防重放。</li>
+        <li><strong>电量与后台</strong>：Live Activity / 常驻通知更新需节流，避免高频推送耗电。</li>
+        <li><strong>可达性</strong>：命中目标 ≥ 44px；状态不仅靠颜色区分（同时用图标 / 文案）。</li>
+      </ul>
+
+      <h2>14 · 验收标准与里程碑</h2>
+      <h3>14.1 关键验收标准</h3>
+      <ul>
+        <li>首页能按状态分组展示全部项目，审批项置顶并实时计数。</li>
+        <li>进入项目可见完整对话（含 Bash / Edit 工具块）与四阶段步骤条。</li>
+        <li>App 内、灵动岛、锁屏 / 通知任一处批准 / 拒绝，桥接服务正确放行 / 中止 Claude Code，且三处状态同步。</li>
+        <li>审批幂等、过期、已在他端处理三种边界均有正确反馈。</li>
+        <li>断连重连后状态自动校正无残留。</li>
+      </ul>
+      <h3>14.2 建议里程碑</h3>
+      <table class="t">
+        <thead><tr><th style="width:90px">阶段</th><th style="width:160px">范围</th><th>交付</th></tr></thead>
+        <tbody>
+          <tr><td><strong>M1</strong></td><td>F1 + F2 + 协议下行</td><td>首页总览 + 项目详情对话，只读监控可用。</td></tr>
+          <tr><td><strong>M2</strong></td><td>F3 + 上行协议</td><td>App 内远程审批闭环（批准/拒绝放行）。</td></tr>
+          <tr><td><strong>M3</strong></td><td>F4 + F5 + F6</td><td>灵动岛 / 锁屏 / 通知联动 + IP 形象接入。</td></tr>
+          <tr><td><strong>M4</strong></td><td>非功能 + 安全</td><td>鉴权、幂等、时效、重连校正、节流与耗电优化。</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><p><span class="k">配套交付：</span>高保真可点击原型 <code>高保真原型.dc.html</code> 与功能/IP 线稿 <code>新功能线稿.dc.html</code> 已随本文档提供，研发可对照原型确认交互细节与视觉规范。</p></div>
+
+    </td></tr></tbody>
+    <tfoot><tr><td class="ftr-space"></td></tr></tfoot>
+  </table>
+</main>
+</x-dc>
+</body>
+</html>

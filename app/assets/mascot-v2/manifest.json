@@ -1,0 +1,294 @@
+{
+  "assets": [
+    {
+      "file": "avatar.png",
+      "source": "xiaomeng-hero-v2.png",
+      "role": "avatar",
+      "inset": 0.06,
+      "source_crop": [
+        260,
+        0,
+        1005,
+        725
+      ],
+      "source_content_bounds": [
+        0,
+        8,
+        745,
+        725
+      ],
+      "bytes": 25198,
+      "size": [
+        160,
+        160
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        9,
+        12,
+        150,
+        148
+      ],
+      "transparent_percent": 52.93,
+      "partial_alpha_percent": 45.03
+    },
+    {
+      "file": "hero-celebrate.png",
+      "source": "xiaomeng-celebrate-v2.png",
+      "role": "hero",
+      "inset": 0.06,
+      "source_crop": [
+        211,
+        23,
+        1055,
+        1217
+      ],
+      "source_content_bounds": [
+        0,
+        7,
+        844,
+        1187
+      ],
+      "bytes": 285285,
+      "size": [
+        768,
+        768
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        142,
+        46,
+        626,
+        722
+      ],
+      "transparent_percent": 72.45,
+      "partial_alpha_percent": 27.18
+    },
+    {
+      "file": "hero-welcome.png",
+      "source": "xiaomeng-hero-v2.png",
+      "role": "hero",
+      "inset": 0.06,
+      "source_crop": [
+        231,
+        3,
+        1030,
+        1233
+      ],
+      "source_content_bounds": [
+        8,
+        5,
+        798,
+        1222
+      ],
+      "bytes": 253466,
+      "size": [
+        768,
+        768
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        164,
+        46,
+        603,
+        722
+      ],
+      "transparent_percent": 75.7,
+      "partial_alpha_percent": 23.93
+    },
+    {
+      "file": "hero-working.png",
+      "source": "xiaomeng-working-alpha-v2.png",
+      "role": "hero",
+      "inset": 0.06,
+      "source_crop": null,
+      "source_content_bounds": [
+        217,
+        41,
+        1033,
+        1161
+      ],
+      "bytes": 294495,
+      "size": [
+        768,
+        768
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        137,
+        46,
+        630,
+        722
+      ],
+      "transparent_percent": 68.61,
+      "partial_alpha_percent": 2.0
+    },
+    {
+      "file": "state-approval.png",
+      "source": "mascot-approval.png",
+      "role": "state",
+      "inset": 0.06,
+      "source_crop": null,
+      "source_content_bounds": [
+        288,
+        125,
+        931,
+        1102
+      ],
+      "bytes": 74362,
+      "size": [
+        384,
+        384
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        81,
+        23,
+        303,
+        361
+      ],
+      "transparent_percent": 75.49,
+      "partial_alpha_percent": 3.54
+    },
+    {
+      "file": "state-completed.png",
+      "source": "xiaomeng-celebrate-v2.png",
+      "role": "state",
+      "inset": 0.06,
+      "source_crop": [
+        211,
+        23,
+        1055,
+        1217
+      ],
+      "source_content_bounds": [
+        0,
+        7,
+        844,
+        1187
+      ],
+      "bytes": 81309,
+      "size": [
+        384,
+        384
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        71,
+        23,
+        313,
+        361
+      ],
+      "transparent_percent": 72.1,
+      "partial_alpha_percent": 27.03
+    },
+    {
+      "file": "state-error.png",
+      "source": "mascot-error.png",
+      "role": "state",
+      "inset": 0.06,
+      "source_crop": null,
+      "source_content_bounds": [
+        337,
+        177,
+        900,
+        1061
+      ],
+      "bytes": 75574,
+      "size": [
+        384,
+        384
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        84,
+        23,
+        299,
+        361
+      ],
+      "transparent_percent": 73.54,
+      "partial_alpha_percent": 3.25
+    },
+    {
+      "file": "state-idle.png",
+      "source": "mascot-idle.png",
+      "role": "state",
+      "inset": 0.06,
+      "source_crop": null,
+      "source_content_bounds": [
+        312,
+        112,
+        923,
+        1116
+      ],
+      "bytes": 71919,
+      "size": [
+        384,
+        384
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        89,
+        23,
+        295,
+        361
+      ],
+      "transparent_percent": 76.28,
+      "partial_alpha_percent": 3.43
+    },
+    {
+      "file": "state-running.png",
+      "source": "xiaomeng-working-alpha-v2.png",
+      "role": "state",
+      "inset": 0.06,
+      "source_crop": null,
+      "source_content_bounds": [
+        217,
+        41,
+        1033,
+        1161
+      ],
+      "bytes": 86626,
+      "size": [
+        384,
+        384
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        69,
+        23,
+        315,
+        361
+      ],
+      "transparent_percent": 67.89,
+      "partial_alpha_percent": 3.7
+    }
+  ]
+}
