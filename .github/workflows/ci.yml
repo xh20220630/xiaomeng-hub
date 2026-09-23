@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Exact commit to validate for a release
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  metadata:
+    name: Version and release tooling
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+      - run: node --test scripts/release/*.test.mjs
+      - run: node scripts/release/version.mjs check
+      - name: Check PR version progression and title
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          node scripts/release/version.mjs check --base "$BASE_SHA"
+          node --input-type=module -e 'if (!/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?!?: .+/.test(process.env.PR_TITLE)) throw new Error("Use a Conventional Commit PR title, for example: feat(app): add pairing")'
+
+  server:
+    name: Server (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+        working-directory: server
+      - run: npm run typecheck
+        working-directory: server
+      - run: npm test
+        working-directory: server
+      - run: npm run build
+        working-directory: server
+      - name: Test production package with production dependencies only
+        run: |
+          node scripts/release/stage-server.mjs "$RUNNER_TEMP/server-smoke"
+          npm ci --omit=dev --prefix "$RUNNER_TEMP/server-smoke"
+          node scripts/release/smoke-server.mjs "$RUNNER_TEMP/server-smoke"
+
+  flutter:
+    name: Flutter and Android
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: ./.github/actions/setup-flutter
+      - run: flutter pub get --enforce-lockfile
+        working-directory: app
+      - run: flutter analyze --no-pub
+        working-directory: app
+      - run: flutter test --no-pub
+        working-directory: app
+      - run: flutter build apk --debug --no-pub
+        working-directory: app
+
+  gate:
+    name: CI gate
+    if: always()
+    needs: [metadata, server, flutter]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every check to pass
+        env:
+          METADATA_RESULT: ${{ needs.metadata.result }}
+          SERVER_RESULT: ${{ needs.server.result }}
+          FLUTTER_RESULT: ${{ needs.flutter.result }}
+        run: |
+          test "$METADATA_RESULT" = success
+          test "$SERVER_RESULT" = success
+          test "$FLUTTER_RESULT" = success

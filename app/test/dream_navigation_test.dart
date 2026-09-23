@@ -35,7 +35,7 @@ Future<void> mountNavigation(
   await tester.runAsync(
     () => precacheImage(
       AssetImage(
-        'assets/motion/${reduced || kStaticCapture ? 'ip-tabbar-still' : 'ip-tabbar-atlas'}.png',
+        'assets/motion/${reduced || kStaticCapture ? 'tabbar-still' : 'tabbar-atlas'}.png',
       ),
       tester.element(find.byType(DreamNavigation)),
     ),

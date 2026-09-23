@@ -84,9 +84,7 @@ class _DreamNavigationState extends State<DreamNavigation>
     _sprites?.dispose();
     _sprites = null;
     _animatedAsset = _enabled;
-    final asset = _animatedAsset
-        ? 'ip-tabbar-atlas.png'
-        : 'ip-tabbar-still.png';
+    final asset = _animatedAsset ? 'tabbar-atlas.png' : 'tabbar-still.png';
     _stream = AssetImage(
       'assets/motion/$asset',
     ).resolve(createLocalImageConfiguration(context));
@@ -131,7 +129,7 @@ class _DreamNavigationState extends State<DreamNavigation>
   @override
   Widget build(BuildContext context) {
     final height =
-        78.0 +
+        90.0 +
         math.max(0, MediaQuery.textScalerOf(context).scale(11) - 11) * 1.2;
     return SafeArea(
       top: false,
@@ -168,7 +166,7 @@ class _DreamNavigationState extends State<DreamNavigation>
             padding: const EdgeInsets.symmetric(vertical: 3),
             minimumSize: const Size(48, 64),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(25),
             ),
             overlayColor: Colors.transparent,
             foregroundColor: selected ? AppColors.ink : AppColors.textSecondary,
@@ -177,7 +175,7 @@ class _DreamNavigationState extends State<DreamNavigation>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               AnimatedScale(
-                scale: selected ? 1.06 : (_hoveredIndex == index ? 1.04 : 1),
+                scale: selected ? 1.12 : (_hoveredIndex == index ? 1.04 : 1),
                 duration: AppMotion.duration(
                   context,
                   const Duration(milliseconds: 240),
@@ -196,14 +194,14 @@ class _DreamNavigationState extends State<DreamNavigation>
                   offset: const Offset(3, 1),
                   child: ExcludeSemantics(
                     child: SizedBox.square(
-                      dimension: 38,
+                      dimension: 46,
                       child: RepaintBoundary(
                         child: AnimatedBuilder(
                           animation: _poses[index],
                           builder: (context, child) {
                             final progress = _poses[index].value;
                             return Transform.translate(
-                              offset: Offset(0, -progress * 2),
+                              offset: Offset(0, -progress * 4),
                               child: Opacity(
                                 opacity: .85 + progress * .15,
                                 child: _sprites == null

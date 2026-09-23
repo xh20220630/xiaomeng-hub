@@ -2,7 +2,9 @@
 
 ## v3 卡片与 IP 精修
 
-侧栏补齐角色展示、工作空间与主机状态分组；项目页采用通栏小梦 IP 封面，统一 12px 卡片与 10px 按钮圆角。六枚透明图标用于侧栏、底部导航、会话和主机卡片。设计稿、实际 Flutter 截图与改版前后对照见 [精修交付](../design/ui-v3/refinement/README.md)。
+侧栏补齐角色展示、工作空间与主机状态分组；项目页采用通栏小梦 IP 封面，统一 12px 卡片与 10px 按钮圆角。六枚透明 IP 图标用于侧栏、会话和主机卡片。设计稿、实际 Flutter 截图与改版前后对照见 [精修交付](../design/ui-v3/refinement/README.md)。
+
+2026-09-23：底部 tabbar 恢复原有 Blender 制作的会话、项目、收件箱、归档四枚图标，使用 `app/assets/motion/tabbar-atlas.png` 与 `tabbar-still.png`。保留原版 46px 图标、90px 导航内容高度及选中上浮效果；选中时正向播放 16 帧并保持终态，取消选中时反向播放，减少动态效果时直接显示对应静态姿态。源文件为 `scripts/design/tabbar-motion.blend`，生成脚本为 `scripts/design/tabbar-motion.py`，动效见 [Blender tabbar 预览](../design/ui-v3/tabbar-preview.gif)。
 
 ## v2.0 云朵工作室
 

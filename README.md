@@ -40,7 +40,7 @@
 
 ## 项目截图
 
-以下为项目现有 Flutter 界面的实际组件渲染截图，使用隔离测试数据，采集于 **2026-09-19**。截图中的项目、会话、模型和在线数量为测试示例，实际内容以已接入主机为准。
+以下为项目现有 Flutter 界面的实际组件渲染截图，使用隔离测试数据，采集于 **2026-09-23**，底部导航使用原版 Blender 动画图标。截图中的项目、会话、模型和在线数量为测试示例，实际内容以已接入主机为准。
 
 截图直接引用仓库内的原始 PNG，来源见 [界面截图测试](app/test/ui_v3_review_test.dart) 和 [UI 验证记录](design/ui-v3/refinement/README.md)。
 
@@ -160,7 +160,7 @@ flutter run
 flutter build apk --release
 ~~~
 
-输出位于 `app/build/app/outputs/flutter-apk/app-release.apk`。当前 Android 工程的 release 配置使用开发调试签名，正式分发前需配置自己的签名。
+输出位于 `app/build/app/outputs/flutter-apk/app-release.apk`。本地未配置发布密钥时使用调试签名；GitHub 正式发布强制使用专用签名并校验证书。版本、签名和发布步骤见 [CI/CD 与版本管理](docs/RELEASING.md)。
 
 ### 4. 扫码绑定
 
@@ -238,7 +238,7 @@ npm run agent:connect
 
 ### 接入自定义 Agent
 
-使用 [Node SDK](server/sdk/agent-client.mjs) 和 [可运行的演示接入端](server/scripts/demo-agent.mjs)，也可以使用 Python、Go 等语言直接实现 HTTP 协议。
+使用 [TypeScript SDK](server/src/sdk/agent-client.ts) 和 [可运行的演示接入端](server/scripts/demo-agent.ts)，也可以使用 Python、Go 等语言直接实现 HTTP 协议。
 
 接入端通过 `message.send`、`message.steer`、`session.start`、`session.stop`、`approval.respond` 等处理器声明能力；只提供监控时，可以仅上报项目、会话和事件。
 
@@ -275,9 +275,10 @@ xiaomeng-hub/
 │   ├── assets/                  小梦形象、界面素材与动画图集
 │   └── test/                    交互、协议与界面截图测试
 ├── server/
-│   ├── src/                     中心服务、认证、审批与操作路由
-│   ├── sdk/                     通用 Agent SDK 与 Codex 适配
-│   ├── scripts/                 一体启动、接入端与演示脚本
+│   ├── src/                     TypeScript 路由、控制器、服务、仓储与类型
+│   │   ├── sdk/                 通用 Agent SDK
+│   │   └── adapters/            Claude / Codex 外部协议适配
+│   ├── scripts/                 TypeScript 一体启动、接入与演示脚本
 │   ├── public/pair/             宿主机扫码绑定管理页
 │   └── test/                    服务端协议与集成测试
 ├── docs/                        接入协议、部署与设计文档
@@ -320,6 +321,8 @@ flutter test test/ui_v3_review_test.dart --dart-define=STATIC_CAPTURE=true --dar
 
 ## 文档导航
 
+- [CI/CD、统一版本与 GitHub 发布](docs/RELEASING.md)
+- [服务端发布包安装与回退](docs/SERVER_DISTRIBUTION.md)
 - [扫码绑定与设备管理](docs/PAIRING.md)
 - [Codex 接入与远程任务操作](docs/CODEX_SETUP.md)
 - [通用 Agent 接入协议](docs/AGENT_PROTOCOL.md)

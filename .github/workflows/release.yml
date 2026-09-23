@@ -1,0 +1,180 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to release or retry (for example v2.0.3)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      tag: ${{ steps.target.outputs.tag }}
+      sha: ${{ steps.commit.outputs.sha }}
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - name: Validate requested tag
+        id: target
+        env:
+          REQUESTED_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          [[ "$REQUESTED_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc)\.(0|[1-9][0-9]*))?$ ]]
+          echo "tag=$REQUESTED_TAG" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: refs/tags/${{ steps.target.outputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+      - name: Require a commit already merged into main
+        id: commit
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Check tag, changelog and monotonically increasing versions
+        id: version
+        env:
+          RELEASE_TAG: ${{ steps.target.outputs.tag }}
+        run: node scripts/release/version.mjs check --tag "$RELEASE_TAG" --released
+
+  checks:
+    needs: verify
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.verify.outputs.sha }}
+
+  publish:
+    needs: [verify, checks]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: release
+    concurrency:
+      group: release-publication
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ needs.verify.outputs.tag }}
+      RELEASE_SHA: ${{ needs.verify.outputs.sha }}
+      RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+      BUILD_NUMBER: ${{ needs.verify.outputs.build_number }}
+      PRERELEASE: ${{ needs.verify.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.verify.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Recheck release ordering after environment approval
+        run: node scripts/release/version.mjs check --tag "$RELEASE_TAG" --released
+      - name: Refuse to replace a published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_TAG" --jq '.sha')" = "$RELEASE_SHA"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            | jq -s 'add | .[] | select(.tag_name == env.RELEASE_TAG)' > "$RUNNER_TEMP/existing-release.json"
+          if [ -s "$RUNNER_TEMP/existing-release.json" ]; then
+            jq -e '.draft == true and .target_commitish == env.RELEASE_SHA' "$RUNNER_TEMP/existing-release.json"
+          fi
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: ./.github/actions/setup-flutter
+      - run: flutter pub get --enforce-lockfile
+        working-directory: app
+      - name: Build and verify the signed APK
+        working-directory: app
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_CERT_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/xiaomeng-release.jks
+          REQUIRE_RELEASE_SIGNING: 'true'
+        run: |
+          for variable in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD ANDROID_CERT_SHA256; do
+            if [ -z "${!variable}" ]; then echo "Missing release setting: $variable" >&2; exit 1; fi
+          done
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          flutter build apk --release --no-pub --build-name "$RELEASE_VERSION" --build-number "$BUILD_NUMBER"
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          "$apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk > "$RUNNER_TEMP/apk-signature.txt"
+          actual=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' "$RUNNER_TEMP/apk-signature.txt" | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')
+          expected=$(printf '%s' "$ANDROID_CERT_SHA256" | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')
+          [[ "$expected" =~ ^[0-9a-f]{64}$ ]]
+          test "$actual" = "$expected"
+          mkdir -p ../dist/release
+          cp build/app/outputs/flutter-apk/app-release.apk "../dist/release/xiaomeng-v$RELEASE_VERSION-android.apk"
+      - name: Remove signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/xiaomeng-release.jks"
+      - run: npm ci
+        working-directory: server
+      - run: npm run build
+        working-directory: server
+      - name: Package the compiled server
+        run: |
+          package="xiaomeng-server-v$RELEASE_VERSION"
+          stage="$RUNNER_TEMP/server-package/$package"
+          node scripts/release/stage-server.mjs "$stage"
+          tar -czf "dist/release/$package.tar.gz" -C "$RUNNER_TEMP/server-package" "$package"
+          (cd "$RUNNER_TEMP/server-package" && zip -qr "$GITHUB_WORKSPACE/dist/release/$package.zip" "$package")
+          mkdir "$RUNNER_TEMP/package-smoke"
+          tar -xzf "dist/release/$package.tar.gz" -C "$RUNNER_TEMP/package-smoke"
+          npm ci --omit=dev --prefix "$RUNNER_TEMP/package-smoke/$package"
+          node scripts/release/smoke-server.mjs "$RUNNER_TEMP/package-smoke/$package"
+      - name: Generate release manifest and checksums
+        run: node scripts/release/artifact-manifest.mjs dist/release
+      - name: Retain completed assets for inspection
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-${{ needs.verify.outputs.version }}-${{ github.run_attempt }}
+          path: dist/release/*
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish a complete GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -s "$RUNNER_TEMP/existing-release.json" ]; then
+            printf '版本：%s；Android 构建号：%s；提交：%s\n\n[完整更新日志](https://github.com/%s/blob/%s/CHANGELOG.md)\n\nAPK 与服务端安装包的 SHA-256 见附件 SHA256SUMS.txt。\n' \
+              "$RELEASE_VERSION" "$BUILD_NUMBER" "$RELEASE_SHA" "$GITHUB_REPOSITORY" "$RELEASE_SHA" > "$RUNNER_TEMP/release-notes.md"
+            args=(--draft --verify-tag --target "$RELEASE_SHA" --title "小梦 $RELEASE_TAG" --generate-notes --notes-file "$RUNNER_TEMP/release-notes.md")
+            if [ "$PRERELEASE" = true ]; then args+=(--prerelease); fi
+            gh release create "$RELEASE_TAG" "${args[@]}"
+          fi
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" --jq '.draft')" = true
+          gh release upload "$RELEASE_TAG" dist/release/* --clobber
+          gh release view "$RELEASE_TAG" --json assets --jq '.assets | length' | grep -qx '5'
+          if [ "$PRERELEASE" = true ]; then
+            gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false
+          else
+            gh release edit "$RELEASE_TAG" --draft=false --prerelease=false --latest
+          fi

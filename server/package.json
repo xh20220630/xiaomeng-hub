@@ -1,19 +1,25 @@
 {
   "name": "claude-monitor-server",
-  "version": "0.1.0",
+  "version": "2.0.2",
   "private": true,
   "type": "module",
   "description": "LAN agent task monitoring and remote operations platform with a Claude Code adapter.",
-  "main": "src/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
-    "start": "node --disable-warning=ExperimentalWarning src/index.js",
-    "host": "node --disable-warning=ExperimentalWarning scripts/start-host.mjs",
-    "dev": "node --watch --disable-warning=ExperimentalWarning src/index.js",
-    "sample": "node --disable-warning=ExperimentalWarning scripts/send-sample.mjs",
-    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.mjs",
-    "agent:demo": "node scripts/demo-agent.mjs",
-    "agent:codex": "node scripts/codex-agent.mjs",
-    "agent:connect": "node scripts/connect-hub.mjs"
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"{src,scripts,test}/**/*.ts\" \"*.json\"",
+    "format:check": "prettier --check \"{src,scripts,test}/**/*.ts\" \"*.json\"",
+    "prestart": "npm run build",
+    "start": "node --disable-warning=ExperimentalWarning dist/src/index.js",
+    "prehost": "npm run build",
+    "host": "node --disable-warning=ExperimentalWarning dist/scripts/start-host.js",
+    "dev": "tsx watch src/index.ts",
+    "sample": "tsx scripts/send-sample.ts",
+    "test": "tsc && node --disable-warning=ExperimentalWarning --test dist/test/*.test.js",
+    "agent:demo": "tsx scripts/demo-agent.ts",
+    "agent:codex": "tsx scripts/codex-agent.ts",
+    "agent:connect": "tsx scripts/connect-hub.ts"
   },
   "engines": {
     "node": ">=22.5"
@@ -22,5 +28,15 @@
     "express": "^4.21.2",
     "qrcode": "^1.5.4",
     "ws": "^8.18.0"
-  }
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.25",
+    "@types/node": "^22.20.4",
+    "@types/qrcode": "^1.5.6",
+    "@types/ws": "^8.18.1",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "types": "dist/src/index.d.ts"
 }

@@ -237,7 +237,7 @@ void main() {
         await tester.runAsync(() async {
           final context = tester.element(find.byType(Scaffold).first);
           await precacheImage(
-            const AssetImage('assets/motion/ip-tabbar-still.png'),
+            const AssetImage('assets/motion/tabbar-still.png'),
             context,
           );
           for (final file

@@ -1,3 +1,9 @@
+/** 本机配对管理页仅调用配对接口，设备凭据的生成、验证和撤销由后端负责。 */
+/**
+ * 读取固定页面元素，使事件处理器共享同一组控件。
+ * @param {string} id 页面中唯一的元素标识。
+ * @returns {HTMLElement | null} 匹配的页面元素。
+ */
 const $ = (id) => document.getElementById(id);
 let current = null;
 let creating = false;
@@ -6,6 +12,12 @@ let paired = false;
 let revokeId = null;
 let connectionIssue = false;
 
+/**
+ * 限定调用配对接口并设置超时，避免断线后界面一直等待。
+ * @param {string} path 相对于 /pair 的接口路径。
+ * @param {RequestInit} options 请求方法和正文等选项。
+ * @returns {Promise<object>} 已解码的响应；请求失败时抛出可展示的错误。
+ */
 async function request(path, options = {}) {
   const response = await fetch(`/pair${path}`, { ...options, headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(8000) });
   if (!response.ok) {
@@ -14,10 +26,22 @@ async function request(path, options = {}) {
   }
   return response.json();
 }
+/**
+ * 用纯文本展示操作反馈，避免把后端内容当作 HTML 插入。
+ * @param {string} message 提示正文；空文本时隐藏提示区。
+ * @returns {void} 无返回值。
+ */
 function feedback(message = '') {
   $('feedback').textContent = message;
   $('feedback').hidden = !message;
 }
+/**
+ * 在二维码不可用时显示明确状态，防止用户继续扫描旧码。
+ * @param {string} symbol 状态图形字符。
+ * @param {string} message 状态说明。
+ * @param {boolean} success 是否使用绑定成功的视觉状态。
+ * @returns {void} 无返回值。
+ */
 function placeholder(symbol, message, success = false) {
   $('qr-image').hidden = true;
   $('qr-placeholder').hidden = false;
@@ -25,10 +49,21 @@ function placeholder(symbol, message, success = false) {
   $('qr-placeholder').querySelector('p').textContent = message;
   $('qr-frame').classList.toggle('success', success);
 }
+/**
+ * 同步连接状态文字和颜色，避免两者表达不一致。
+ * @param {string} message 当前连接阶段的说明。
+ * @param {boolean} success 当前是否已成功绑定。
+ * @returns {void} 无返回值。
+ */
 function status(message, success = false) {
   $('status-text').textContent = message;
   $('status-dot').classList.toggle('success', success);
 }
+/**
+ * 重绘已绑定设备，并在用户确认后才执行解除操作。
+ * @param {Array<import('../../src/types/pairing.js').DeviceView>} items 后端返回的设备摘要，不包含令牌。
+ * @returns {void} 无返回值。
+ */
 function devices(items) {
   $('device-count').textContent = items.length;
   const list = $('device-list');
@@ -53,6 +88,11 @@ function devices(items) {
     list.append(row);
   }
 }
+/**
+ * 刷新设备和 Agent 在线信息；仅首次加载时选择网卡并生成二维码。
+ * @param {boolean} initial 是否执行首次页面初始化。
+ * @returns {Promise<void>} 信息与页面同步完成的信号。
+ */
 async function loadInfo(initial = false) {
   const info = await request('/info');
   devices(info.devices);
@@ -81,6 +121,10 @@ async function loadInfo(initial = false) {
   $('refresh').disabled = false;
   await generate();
 }
+/**
+ * 生成二维码期间禁用重复提交，并清除旧链接以避免复制失效内容。
+ * @returns {Promise<void>} 新码展示或失败提示更新完成的信号。
+ */
 async function generate() {
   if (creating) return;
   creating = true;
@@ -111,6 +155,10 @@ async function generate() {
     $('address').disabled = false;
   }
 }
+/**
+ * 清除过期二维码及复制能力，要求用户显式刷新后重新绑定。
+ * @returns {void} 无返回值。
+ */
 function expire() {
   current = null;
   $('countdown').textContent = '';
@@ -118,12 +166,20 @@ function expire() {
   placeholder('↻', '二维码已失效，刷新后重新扫码');
   status('请刷新二维码');
 }
+/**
+ * 使用服务端有效期更新倒计时，归零后立即隐藏本地旧码。
+ * @returns {void} 无返回值。
+ */
 function tick() {
   if (!current || paired) return;
   const seconds = Math.max(0, Math.ceil((current.expiresAt - Date.now()) / 1000));
   if (!seconds) return expire();
   $('countdown').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} 后失效`;
 }
+/**
+ * 串行查询当前二维码，忽略刷新前发出的旧请求，避免覆盖新状态。
+ * @returns {Promise<void>} 本次状态查询及必要页面更新完成的信号。
+ */
 async function poll() {
   if (!current || paired || polling || creating) return;
   const session = current;

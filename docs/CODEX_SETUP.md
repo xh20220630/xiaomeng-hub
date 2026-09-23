@@ -106,7 +106,7 @@ npm run agent:codex
 
 ```powershell
 cd server
-node --disable-warning=ExperimentalWarning --test test/codex.test.mjs test/codex-desktop.test.mjs test/codex-host.test.mjs test/platform.test.mjs
+npm test
 ```
 
 集成测试使用模拟桌面持有者、App Server 与真实小梦中心服务，不调用模型。真实宿主机已验证当前桌面会话实时状态、5 个可用模型，以及保留当前模型的设置回执（本机一次往返约 69 ms；非跨机器延迟承诺）。通过 Web 的“追加指令”发出的连通性测试消息，已由当前正在执行的桌面任务实际收到。跨机器网络和手机后台存活需部署后实机验证。
