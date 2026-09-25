@@ -149,9 +149,21 @@ Widget _host(MonitorState state) {
   );
 }
 
+/// 推进导航、菜单和滚动过渡；运行状态灯会持续产生帧，不能等待整页静止。
+///
+/// [tester] 驱动当前测试界面；返回的 Future 在有限帧推进完成后结束，
+/// 具体业务结果仍由各测试的断言确认。
+Future<void> _pumpUiTransition(WidgetTester tester) async {
+  await tester.pump();
+  // 分帧推进，确保懒加载列表的布局与滚动回调能在过渡期间依次完成。
+  for (var frame = 0; frame < 6; frame++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
 Future<void> _showSessions(WidgetTester tester) async {
   await tester.drag(find.byType(CustomScrollView), const Offset(0, -370));
-  await tester.pumpAndSettle();
+  await _pumpUiTransition(tester);
 }
 
 void main() {
@@ -398,9 +410,9 @@ void main() {
     await tester.enterText(find.byType(TextField), '暂存的草稿');
     await tester.pump();
     await tester.tap(find.byTooltip('会话操作'));
-    await tester.pumpAndSettle();
+    await _pumpUiTransition(tester);
     await tester.tap(find.text('停止当前任务'));
-    await tester.pumpAndSettle();
+    await _pumpUiTransition(tester);
     expect(controlled, 'turn:stop');
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller!.text,
@@ -502,11 +514,11 @@ void main() {
       await _showSessions(tester);
       expect(find.textContaining('Custom Worker'), findsWidgets);
       await tester.tap(find.text('Remote task'));
-      await tester.pumpAndSettle();
+      await _pumpUiTransition(tester);
       expect(tester.widget<TextField>(find.byType(TextField)).enabled, false);
       expect(find.text('此任务仅支持监控'), findsOneWidget);
       await tester.tap(find.byType(PopupMenuButton<String>));
-      await tester.pumpAndSettle();
+      await _pumpUiTransition(tester);
       expect(
         tester
             .widget<PopupMenuItem<String>>(
@@ -579,15 +591,15 @@ void main() {
       );
       await tester.pump();
       await tester.tap(find.text('项目'));
-      await tester.pumpAndSettle();
+      await _pumpUiTransition(tester);
       await tester.tap(find.text('远程主机与 Agent'));
-      await tester.pumpAndSettle();
+      await _pumpUiTransition(tester);
       await tester.tap(find.text('Worker A'));
-      await tester.pumpAndSettle();
+      await _pumpUiTransition(tester);
       expect(find.text('Project A'), findsWidgets);
       expect(find.text('Project B'), findsNothing);
       await tester.tap(find.byTooltip('显示全部 Agent'));
-      await tester.pumpAndSettle();
+      await _pumpUiTransition(tester);
       expect(find.text('Project B'), findsWidgets);
     },
   );
@@ -763,7 +775,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await _pumpUiTransition(tester);
       final scrollable = tester.state<ScrollableState>(
         find.descendant(
           of: find.byType(ListView),
@@ -771,7 +783,7 @@ void main() {
         ),
       );
       scrollable.position.jumpTo(480);
-      await tester.pumpAndSettle();
+      await _pumpUiTransition(tester);
       final visible =
           find
                   .byType(ChatBubble)
@@ -801,7 +813,7 @@ void main() {
       expect(tester.getTopLeft(anchor()).dy, closeTo(before, 1));
       expect(find.text('回到最新'), findsOneWidget);
       await tester.tap(find.text('回到最新'));
-      await tester.pumpAndSettle();
+      await _pumpUiTransition(tester);
       expect(scrollable.position.pixels, 0);
       expect(find.text('回到最新'), findsNothing);
       expect(tester.takeException(), isNull);
