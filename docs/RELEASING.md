@@ -53,6 +53,8 @@ node scripts/release/version.mjs set patch
 
 Node 与 Flutter 分别固定于 `.node-version`、`.flutter-version`，Java 固定为 17。依赖使用 `npm ci` 和 `flutter pub get --enforce-lockfile`。GitHub Actions 固定完整提交 SHA，由 Dependabot 提议更新。Flutter/Node 的版本文件仍需开发者定期维护并验证。
 
+JDK 路径由构建环境提供：CI 和 Release 通过 `actions/setup-java` 设置 `JAVA_HOME`，不要在仓库的 `app/android/gradle.properties` 中配置 `org.gradle.java.home`，否则本机路径会覆盖 runner 的 JDK 配置。本地默认 Java 版本不合适时，可执行 `flutter config --jdk-dir="<本机 JDK 17 的绝对路径>"`；这是当前用户的 Flutter 配置，不应写入仓库。
+
 服务端包按白名单复制 `dist/src`、`dist/scripts`、配对页面和必要文档；不包含源码测试、node_modules、数据库、令牌或日志。运行包会将 npm 命令指向编译后的 JS，移除自动编译的 prestart/prehost 钩子，再使用仅生产依赖验证启动。
 
 ## GitHub 一次性配置
