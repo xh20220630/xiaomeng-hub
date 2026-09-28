@@ -42,7 +42,7 @@ dependencies:
   google_fonts: ^8.1.0
   gpt_markdown: ^1.1.7
   url_launcher: ^6.3.2
-  mobile_scanner: 7.4.0
+  mobile_scanner: 7.4.2
 
 dev_dependencies:
   flutter_test:
