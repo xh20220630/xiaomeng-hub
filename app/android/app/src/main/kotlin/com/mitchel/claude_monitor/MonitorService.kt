@@ -6,8 +6,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
 import android.net.ConnectivityManager
 import android.net.Network
@@ -64,7 +62,6 @@ class MonitorService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private val projects = LinkedHashMap<String, ProjectState>()
     private val notifiedApprovals = HashSet<String>()
-    private val bitmapCache = HashMap<Int, Bitmap>()
 
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -78,6 +75,7 @@ class MonitorService : Service() {
     private var backoffMs = 1_000L
     private var destroyed = false
     private var foregroundStarted = false
+    private var connectionState = "unconfigured"
     private val reconnectRunnable = Runnable { connect() }
 
     private val netCallback = object : ConnectivityManager.NetworkCallback() {
@@ -194,6 +192,8 @@ class MonitorService : Service() {
     private fun connect() {
         if (destroyed) return
         val url = currentWsUrl() ?: return
+        connectionState = "connecting"
+        refreshCapsule()
         try {
             ws?.cancel()
         } catch (_: Throwable) {
@@ -201,6 +201,8 @@ class MonitorService : Service() {
         val request = try {
             Request.Builder().url(url).build()
         } catch (_: Throwable) {
+            connectionState = "offline"
+            refreshCapsule()
             return // malformed URL — wait for a proper configureService
         }
         ws = client.newWebSocket(request, SocketListener())
@@ -208,6 +210,8 @@ class MonitorService : Service() {
 
     private fun scheduleReconnect() {
         if (destroyed) return
+        connectionState = "offline"
+        refreshCapsule()
         handler.removeCallbacks(reconnectRunnable)
         handler.postDelayed(reconnectRunnable, backoffMs)
         backoffMs = (backoffMs * 2).coerceAtMost(60_000L) // 1s→2s→…→60s cap
@@ -215,7 +219,13 @@ class MonitorService : Service() {
 
     private inner class SocketListener : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
-            handler.post { if (webSocket === ws) backoffMs = 1_000L }
+            handler.post {
+                if (webSocket === ws && !destroyed) {
+                    backoffMs = 1_000L
+                    connectionState = "syncing"
+                    refreshCapsule()
+                }
+            }
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
@@ -271,6 +281,7 @@ class MonitorService : Service() {
     }
 
     private fun onSnapshot(arr: JSONArray) {
+        connectionState = "online"
         projects.clear()
         for (i in 0 until arr.length()) {
             val o = arr.optJSONObject(i) ?: continue
@@ -364,25 +375,6 @@ class MonitorService : Service() {
         )
     }
 
-    /** Decode + downscale a mascot drawable for use as a largeIcon. */
-    private fun mascot(resId: Int): Bitmap? {
-        bitmapCache[resId]?.let { return it }
-        val raw = try {
-            BitmapFactory.decodeResource(resources, resId)
-        } catch (_: Throwable) {
-            null
-        } ?: return null
-        val max = 256
-        val scaled = if (raw.width <= max) {
-            raw
-        } else {
-            val h = (max.toLong() * raw.height / raw.width).toInt().coerceAtLeast(1)
-            Bitmap.createScaledBitmap(raw, max, h, true)
-        }
-        bitmapCache[resId] = scaled
-        return scaled
-    }
-
     private fun notifyApprovalIfNew(ap: JSONObject) {
         val id = ap.str("approvalId") ?: return
         if (!notifiedApprovals.add(id)) return // already announced
@@ -417,9 +409,6 @@ class MonitorService : Service() {
         val b = builder(Notifications.CHANNEL_APPROVALS)
             .setContentTitle(if (danger) "⚠️ 需要审批：$title" else "需要审批：$title")
             .setContentText(subject)
-            .setStyle(Notification.BigTextStyle().bigText(subject))
-            .setSmallIcon(R.drawable.ic_stat_meng)
-            .setLargeIcon(mascot(R.drawable.meng_approval))
             .setOngoing(true)
             .setAutoCancel(false)
             .setOnlyAlertOnce(false)
@@ -431,6 +420,11 @@ class MonitorService : Service() {
         } else {
             b.addAction(action("批准", approvePi)).addAction(action("拒绝", rejectPi))
         }
+        LiveNotificationTheme.apply(this, b, LiveNotificationState(
+            phase = if (kind == "input") LivePhase.INPUT else LivePhase.APPROVAL,
+            title = if (kind == "input") "需要回复：$title" else if (danger) "⚠ 需要审批：$title" else "需要审批：$title",
+            summary = if (kind == "input") "打开小梦回答主机上的问题" else subject,
+        ), live = false)
         if (Build.VERSION.SDK_INT >= 26 && expiresAt > System.currentTimeMillis()) {
             b.setTimeoutAfter(expiresAt - System.currentTimeMillis())
         }
@@ -442,12 +436,11 @@ class MonitorService : Service() {
 
     private fun notifyTaskDone(p: ProjectState) {
         val b = builder(Notifications.CHANNEL_TASKS)
-            .setContentTitle("✅ 任务完成")
-            .setContentText(listOfNotNull(p.name, p.summary).joinToString("："))
-            .setSmallIcon(R.drawable.ic_stat_meng)
-            .setLargeIcon(mascot(R.drawable.meng_completed))
             .setAutoCancel(true)
             .setContentIntent(activityIntent(p.projectId, p.sessionId, null))
+        LiveNotificationTheme.apply(this, b, LiveNotificationState(
+            LivePhase.DONE, "任务完成 · ${p.name}", p.summary,
+        ), live = false)
         try {
             Notifications.nm(this).notify("done:${p.projectId}".hashCode() and 0x7fffffff, b.build())
         } catch (_: Throwable) {
@@ -456,74 +449,31 @@ class MonitorService : Service() {
 
     // ---------------------------------------------------------------- capsule
 
-    private fun statusPriority(s: String): Int = when (s) {
-        "needs_approval" -> 0
-        "running" -> 1
-        "waiting_input" -> 2
-        "notification" -> 3
-        "done" -> 4
-        else -> 5 // ended / unknown → effectively idle
-    }
+    private fun statusPriority(s: String): Int = LivePhase.fromStatus(s).priority
 
-    /** Most important project: needs_approval > running > … > most recent done. */
+    /** Actionable states win; failures and offline projects must not disappear as idle. */
     private fun pickTop(): ProjectState? =
         projects.values
-            .filter { statusPriority(it.status) <= 4 }
+            .filter { statusPriority(it.status) < LivePhase.IDLE.priority }
             .minWithOrNull(compareBy({ statusPriority(it.status) }, { -it.lastEventAt }))
 
     private fun buildCapsule(): Notification {
         val top = pickTop()
-        val title: String
-        val text: String
-        val short: String
-        val iconRes: Int
-        if (top == null) {
-            title = "小梦 · Agent 任务平台"
-            text = "待命中"
-            short = "待命"
-            iconRes = R.drawable.meng_idle
-        } else {
-            title = "小梦 · ${top.name}"
-            text = top.summary ?: ""
-            when (top.status) {
-                "needs_approval" -> {
-                    short = "待审批"; iconRes = R.drawable.meng_approval
-                }
-                "running" -> {
-                    short = "运行中"; iconRes = R.drawable.meng_running
-                }
-                "waiting_input" -> {
-                    short = "等输入"; iconRes = R.drawable.meng_approval
-                }
-                "notification" -> {
-                    short = "有通知"; iconRes = R.drawable.meng_running
-                }
-                "done" -> {
-                    short = "已完成"; iconRes = R.drawable.meng_completed
-                }
-                "error" -> {
-                    short = "出错了"; iconRes = R.drawable.meng_error
-                }
-                "offline" -> {
-                    short = "已离线"; iconRes = R.drawable.meng_error
-                }
-                else -> {
-                    short = "待命"; iconRes = R.drawable.meng_idle
-                }
-            }
-        }
+        val phase = LivePhase.forConnection(connectionState, top?.status)
+        val state = LiveNotificationState(
+            phase, top?.name ?: "小梦 · 实时状态",
+            if (connectionState == "online") top?.summary else null,
+            top?.progressDone ?: -1, top?.progressTotal ?: -1,
+        )
         val b = builder(Notifications.CHANNEL_LIVE)
-            .setContentTitle(title)
-            .setContentText(text)
-            .setSmallIcon(R.drawable.ic_stat_meng)
-            .setLargeIcon(mascot(iconRes))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(activityIntent(top?.projectId, top?.sessionId, top?.approvalId))
-        if (top != null && top.progressTotal > 0 && top.progressDone >= 0) {
-            b.setProgress(top.progressTotal, top.progressDone, false)
+        if (top != null) {
+            b.addAction(action(if (phase == LivePhase.APPROVAL) "查看审批" else "查看任务",
+                activityIntent(top.projectId, top.sessionId, top.approvalId)))
         }
-        Notifications.promote(b, short)
+        LiveNotificationTheme.apply(this, b, state, live = true)
         return b.build()
     }
 

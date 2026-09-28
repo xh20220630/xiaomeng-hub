@@ -1,0 +1,38 @@
+[
+  {
+    "name": "running",
+    "source": "design\\live-notifications-v1\\sources\\running.png",
+    "file": "app\\assets\\live-notifications\\running.png",
+    "width": 256,
+    "height": 256,
+    "background": "intentional opaque ink; clipped by native/Flutter views",
+    "bytes": 71018
+  },
+  {
+    "name": "approval",
+    "source": "design\\live-notifications-v1\\sources\\approval.png",
+    "file": "app\\assets\\live-notifications\\approval.png",
+    "width": 256,
+    "height": 256,
+    "background": "intentional opaque ink; clipped by native/Flutter views",
+    "bytes": 69592
+  },
+  {
+    "name": "completed",
+    "source": "design\\live-notifications-v1\\sources\\completed.png",
+    "file": "app\\assets\\live-notifications\\completed.png",
+    "width": 256,
+    "height": 256,
+    "background": "intentional opaque ink; clipped by native/Flutter views",
+    "bytes": 68710
+  },
+  {
+    "name": "offline",
+    "source": "design\\live-notifications-v1\\sources\\offline.png",
+    "file": "app\\assets\\live-notifications\\offline.png",
+    "width": 256,
+    "height": 256,
+    "background": "intentional opaque ink; clipped by native/Flutter views",
+    "bytes": 65241
+  }
+]

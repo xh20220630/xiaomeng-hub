@@ -8,6 +8,8 @@ import '../theme/tokens.dart';
 import '../widgets/studio_widgets.dart';
 import '../widgets/dream_motion.dart';
 import 'pair_host_screen.dart';
+import 'app_version_screen.dart';
+import 'live_notification_theme_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -90,13 +92,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('连接设置')),
+      appBar: AppBar(title: const Text('应用设置')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.notifications_active_outlined),
+                  title: const Text('实时通知外观'),
+                  subtitle: const Text('小梦 IP · 流体云与状态胶囊'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const LiveNotificationThemeScreen(),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.system_update_rounded),
+                  title: const Text('版本管理'),
+                  subtitle: const Text('当前版本、检查更新与自动更新设置'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AppVersionScreen()),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               const DreamPageIntro(
                 title: '让小梦，\n找到你的电脑。',
                 subtitle: '灵感在设备之间，自由接力。',

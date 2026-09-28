@@ -1,0 +1,7 @@
+{
+  "identifier": "launcher",
+  "description": "Only the bundled startup page can inspect and retry the host process.",
+  "local": true,
+  "windows": ["main"],
+  "permissions": ["allow-host-status", "allow-retry-host"]
+}

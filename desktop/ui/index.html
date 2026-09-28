@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>小梦 Host</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header><span class="brand-mark" aria-hidden="true">✳</span><span>小梦 <small>HOST</small></span><span class="local">宿主机控制台</span></header>
+      <section class="card">
+        <div class="eyebrow">FROM DESK TO ANYWHERE</div>
+        <h1>让灵感，<br><span>连在一起。</span></h1>
+        <p class="intro">启动电脑上的服务，把工作进展带到手机上。</p>
+        <div class="status" role="status" aria-live="polite"><i id="indicator"></i><strong id="status">正在准备宿主机…</strong></div>
+        <p id="message">服务就绪后，将自动打开扫码连接入口。</p>
+        <div class="endpoint"><span>连接入口</span><code>http://localhost:4897/pair/</code></div>
+        <button id="retry" type="button" hidden>重新连接</button>
+        <details id="diagnostics"><summary>查看启动日志</summary><pre id="logs">等待服务启动…</pre></details>
+      </section>
+      <footer>手机与电脑连接同一局域网，即可扫码绑定。</footer>
+    </main>
+  </body>
+</html>

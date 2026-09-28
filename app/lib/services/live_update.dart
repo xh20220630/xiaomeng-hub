@@ -26,6 +26,16 @@ class LiveUpdate {
   static bool get _isAndroid =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
+  static Future<bool> previewTheme(String status) async {
+    if (!_isAndroid) return false;
+    try {
+      return await _ch.invokeMethod<bool>('previewTheme', {'status': status}) ??
+          false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Whether the device+app can actually render the promoted capsule
   /// (Android 16 + the user hasn't disabled Live Updates for the app).
   static Future<bool> canPromote() async {
@@ -131,7 +141,9 @@ class LiveUpdate {
 
   /// Register the handler for native->dart 'onDeeplink' pushes (notification
   /// tapped while the app is alive). Only one handler is kept (last wins).
-  static void setDeeplinkHandler(void Function(Map<String, String?> data) handler) {
+  static void setDeeplinkHandler(
+    void Function(Map<String, String?> data) handler,
+  ) {
     if (!_isAndroid) return;
     _ch.setMethodCallHandler((call) async {
       if (call.method == 'onDeeplink' && call.arguments is Map) {
@@ -142,8 +154,8 @@ class LiveUpdate {
   }
 
   static Map<String, String?> _castDeeplink(Map raw) => {
-        'projectId': raw['projectId'] as String?,
-        'sessionId': raw['sessionId'] as String?,
-        'approvalId': raw['approvalId'] as String?,
-      };
+    'projectId': raw['projectId'] as String?,
+    'sessionId': raw['sessionId'] as String?,
+    'approvalId': raw['approvalId'] as String?,
+  };
 }

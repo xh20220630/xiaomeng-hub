@@ -4,10 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'state/settings.dart';
 import 'state/monitor.dart';
 import 'screens/home_screen.dart';
+import 'screens/app_version_screen.dart';
 import 'screens/project_detail_screen.dart';
 import 'services/live_update.dart';
 import 'theme/app_theme.dart';
 import 'widgets/approval_drawer.dart';
+import 'widgets/app_update_coordinator.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -108,6 +110,12 @@ class _ClaudeMonitorAppState extends ConsumerState<ClaudeMonitorApp> {
       debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey,
       theme: buildAppTheme(),
+      builder: (context, child) => AppUpdateCoordinator(
+        onOpen: () => navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const AppVersionScreen()),
+        ),
+        child: child!,
+      ),
       home: const HomeScreen(),
     );
   }

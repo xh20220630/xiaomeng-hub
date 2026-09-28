@@ -1,0 +1,14 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="48dp"
+    android:orientation="horizontal" android:gravity="center_vertical"
+    android:paddingStart="8dp" android:paddingEnd="8dp" android:background="@drawable/meng_live_card">
+    <ImageView android:id="@+id/meng_portrait" android:layout_width="40dp"
+        android:layout_height="40dp" android:importantForAccessibility="no" />
+    <TextView android:id="@+id/meng_title" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="10dp"
+        android:maxLines="1" android:ellipsize="end" android:textSize="14sp"
+        android:textStyle="bold" android:textColor="#F4F6EE" />
+    <TextView android:id="@+id/meng_status" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:layout_marginStart="8dp"
+        android:maxLines="1" android:textSize="12sp" android:textColor="#D9F66F" />
+</LinearLayout>

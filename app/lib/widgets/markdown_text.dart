@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import '../theme/tokens.dart';
 import 'copy_action.dart';
+import 'markdown_link.dart';
 
 /// Accepts incomplete Markdown while a response is streaming.
 class MarkdownText extends StatelessWidget {
@@ -20,6 +21,7 @@ class MarkdownText extends StatelessWidget {
   Widget build(BuildContext context) {
     return GptMarkdown(
       text,
+      onLinkTap: (url, title) => openMarkdownLink(context, url),
       style: AppFont.ui(
         size: size,
         weight: FontWeight.w400,

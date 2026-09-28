@@ -144,6 +144,8 @@ npm run host
 
 ### 3. 运行客户端
 
+Windows 宿主机也可以使用新增的 [Tauri 桌面启动器](desktop/README.md)：自动启动 host，并在应用内打开 `http://localhost:4897/pair/`。如果该端口已有小梦服务，会直接复用。源码开发入口为 `cd desktop` → `npm ci` → `npm run dev`（需先安装服务端依赖、Rust 和 MSVC 构建环境）。
+
 在另一个终端中，从仓库根目录执行：
 
 ~~~powershell
@@ -274,6 +276,7 @@ xiaomeng-hub/
 │   ├── lib/services/            REST、WebSocket、通知与配对
 │   ├── assets/                  小梦形象、界面素材与动画图集
 │   └── test/                    交互、协议与界面截图测试
+├── desktop/                     Tauri 2 宿主机启动器与连接入口
 ├── server/
 │   ├── src/                     TypeScript 路由、控制器、服务、仓储与类型
 │   │   ├── sdk/                 通用 Agent SDK

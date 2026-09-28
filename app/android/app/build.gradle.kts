@@ -75,6 +75,8 @@ flutter {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
+    implementation("androidx.core:core:1.13.1")
     // Backport of java.time etc. for flutter_local_notifications on low API levels.
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // MonitorService's WebSocket client + ApprovalReceiver's REST calls.

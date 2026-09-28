@@ -5,6 +5,7 @@ import { asError } from '../src/utils/errors.js';
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
+import { createInterface } from 'node:readline';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -95,6 +96,7 @@ async function stop(code = 0) {
   if (stopping) return;
   stopping = true;
   clearTimeout(retryTimer);
+  if (process.env.XIAOMENG_DESKTOP_CONTROL === '1') process.stdin.destroy();
   await Promise.all(
     [...children].map(
       (child) =>
@@ -119,6 +121,15 @@ process.on('message', (message) => {
   if (message && typeof message === 'object' && 'type' in message && message.type === 'shutdown')
     void stop();
 });
+
+// 桌面进程关闭管道（包括异常退出）时，回收本次启动的中心与接入端。
+if (process.env.XIAOMENG_DESKTOP_CONTROL === '1') {
+  const control = createInterface({ input: process.stdin });
+  control.on('line', (line) => {
+    if (line === 'shutdown') void stop();
+  });
+  control.once('close', () => void stop());
+}
 
 const hub = launch('src/index.js', env);
 hub.once('exit', (code) => {

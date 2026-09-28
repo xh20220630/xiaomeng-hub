@@ -8,17 +8,21 @@ import 'notification_service.dart';
 /// OS notification and just log, to avoid platform-specific setup — the app and
 /// its live dashboard still work everywhere.
 class NotificationServiceImpl implements NotificationService {
-  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
   bool _inited = false;
 
-  bool get _supported => Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+  bool get _supported =>
+      Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
 
   @override
   Future<void> init() async {
     if (_inited || !_supported) return;
-    // Status-bar small icon must be a white-alpha silhouette (ic_stat_meng),
+    // Status-bar small icon must be a white-alpha silhouette,
     // not the coloured launcher icon — OEMs render the latter as a grey blob.
-    const android = AndroidInitializationSettings('@drawable/ic_stat_meng');
+    const android = AndroidInitializationSettings(
+      '@drawable/ic_stat_meng_live',
+    );
     const darwin = DarwinInitializationSettings();
     const settings = InitializationSettings(
       android: android,
@@ -29,12 +33,16 @@ class NotificationServiceImpl implements NotificationService {
 
     if (Platform.isIOS || Platform.isMacOS) {
       await _plugin
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
           ?.requestPermissions(alert: true, badge: true, sound: true);
     }
     if (Platform.isAndroid) {
       await _plugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.requestNotificationsPermission();
     }
     _inited = true;
