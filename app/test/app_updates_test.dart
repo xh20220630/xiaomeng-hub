@@ -486,7 +486,7 @@ void main() {
     }
     tester.view.physicalSize = const Size(320, 640);
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await tester.tap(find.byTooltip('更新偏好'));
     await tester.pumpAndSettle();
     expect(find.text('自动下载更新'), findsOneWidget);
     expect(tester.takeException(), isNull);

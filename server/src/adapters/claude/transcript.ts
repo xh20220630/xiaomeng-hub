@@ -11,6 +11,8 @@ import path from 'node:path';
 import os from 'node:os';
 import { rawToolInput } from '../../domain/hook-state.js';
 import { sessionOverlayEvents } from '../../repositories/overlay.repository.js';
+import { localResources } from '../../resources/host-resources.js';
+import { collectAttachments } from '../../resources/attachments.js';
 
 export const PROJECTS_DIR =
   process.env.CLAUDE_PROJECTS_DIR || path.join(os.homedir(), '.claude', 'projects');
@@ -298,7 +300,7 @@ export async function readConversation(
   const file = findSessionFile(sessionId);
   const lines = file ? await readTailLines(file, 4 * 1024 * 1024).catch(() => []) : [];
   const slice = lines.length > maxLines ? lines.slice(lines.length - maxLines) : lines;
-  const events = parseEvents(slice, sessionId);
+  const events = await parseEvents(slice, sessionId);
   // A7: append synthesized approval-result events (in-memory overlay) so the
   // app sees "已批准/已拒绝" traces that the transcript itself never records.
   for (const ev of sessionOverlayEvents(sessionId)) {
@@ -331,15 +333,11 @@ function toolResultText(content?: string | TranscriptBlock[]) {
  * @param sessionId 目标会话标识，使用当前协议一侧的命名空间。
  * @returns 按记录顺序组织的事件列表。
  */
-function parseEvents(lines: string[], sessionId: string): TaskEvent[] {
+async function parseEvents(lines: string[], sessionId: string): Promise<TaskEvent[]> {
   const events: TaskEvent[] = [];
+  const fallbackCwd = (await sessionInfo(sessionId))?.cwd || '';
   const toolUses = new Map<string | undefined, Pick<TranscriptBlock, 'name' | 'input'>>();
   let idx = 0;
-  /**
-   * 为解析后的事件分配页面内顺序并补齐共同字段。
-   * @param e 准备保存的事件。
-   * @returns 写入后事件列表的长度。
-   */
   const emit = (e: TaskEvent) =>
     events.push({ id: idx++, session_id: sessionId, status: 'running', ok: null, ...e });
 
@@ -347,6 +345,7 @@ function parseEvents(lines: string[], sessionId: string): TaskEvent[] {
     const o = pj(line);
     if (!o) continue;
     const ts = tsMs(o.timestamp);
+    const resourceContext = { sessionId, cwd: o.cwd || fallbackCwd };
 
     if (o.type === 'user' && o.message) {
       const c = o.message.content;
@@ -371,8 +370,16 @@ function parseEvents(lines: string[], sessionId: string): TaskEvent[] {
               tool_name: tu.name || null,
               ok,
               detail: truncate(toolResultText(b.content), 2000),
+              attachments: await collectAttachments(localResources, resourceContext, b.content),
               summary: `${tu.name || '工具'} ${ok ? '完成' : '失败'}`,
               created_at: ts,
+            });
+          } else if (['image', 'input_image'].includes(b.type || '')) {
+            emit({
+              hook_event_name: 'UserPromptSubmit',
+              detail: '',
+              created_at: ts,
+              attachments: await collectAttachments(localResources, resourceContext, [b]),
             });
           }
         }
@@ -395,6 +402,13 @@ function parseEvents(lines: string[], sessionId: string): TaskEvent[] {
               detail: truncate(b.thinking, 4000),
               summary: 'thinking',
               created_at: ts,
+            });
+          } else if (['image', 'input_image'].includes(b.type || '')) {
+            emit({
+              hook_event_name: 'AssistantText',
+              detail: '',
+              created_at: ts,
+              attachments: await collectAttachments(localResources, resourceContext, [b]),
             });
           } else if (b.type === 'tool_use') {
             toolUses.set(b.id, { name: b.name, input: b.input });

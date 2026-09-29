@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'copy_action.dart';
+import 'host_resource_scope.dart';
+import '../screens/resource_preview_screen.dart';
 
 Future<void> openMarkdownLink(BuildContext context, String destination) async {
   var address = destination.trim();
@@ -10,14 +12,33 @@ Future<void> openMarkdownLink(BuildContext context, String destination) async {
   }
   if (address.startsWith('//')) address = 'https:$address';
   final uri = Uri.tryParse(address);
+  final fileUri = Uri.tryParse(
+    address.replaceFirst(RegExp(r'(?::\d+(?::\d+)?|#L\d+(?:-L?\d+)?)$'), ''),
+  );
   final isFile =
       RegExp(r'^[a-zA-Z]:[/\\]').hasMatch(address) ||
       address.startsWith(r'\\') ||
       uri?.scheme == 'file' ||
-      (uri != null && !uri.hasScheme && uri.path.isNotEmpty);
+      uri?.scheme == 'attachment' ||
+      (fileUri != null &&
+          !fileUri.hasScheme &&
+          (fileUri.path.isNotEmpty || RegExp(r'^#L\d+').hasMatch(address)));
 
   String message;
   if (isFile) {
+    final scope = HostResourceScope.maybeOf(context);
+    if (scope != null) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ResourcePreviewScreen(
+            sessionId: scope.sessionId,
+            reference: address,
+            baseResourceId: scope.baseResourceId,
+          ),
+        ),
+      );
+      return;
+    }
     // Agent paths belong to the host workspace, not the phone's filesystem.
     message = '这是电脑上的文件路径，手机目前无法直接打开。可复制路径后在电脑上查看。';
   } else if (uri == null || address.isEmpty) {

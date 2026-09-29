@@ -22,6 +22,9 @@ import path from 'node:path';
 import { readCodexHostIndex } from './codex-host-index.js';
 import { historyEvent, toolResult } from './codex-history.js';
 import { CodexDesktopBridge } from './codex-desktop-bridge.js';
+import { HostResources } from '../../resources/host-resources.js';
+import { resourceHandlers } from '../../resources/agent-resources.js';
+import { collectAttachments } from '../../resources/attachments.js';
 
 /** Codex 同步范围及执行通道依赖。 */
 export interface CodexAgentOptions {
@@ -87,6 +90,7 @@ const sourceKinds = [
 
 /** 将 Codex 线程、轮次和审批转为中心协议，同时保留主机的实际控制权。 */
 export class CodexAgent {
+  readonly resources = new HostResources();
   /** 与 Codex App Server 通信的传输实例。 */
   rpc!: CodexRpc;
   /** 向中心发布数据的接入 SDK。 */
@@ -252,6 +256,14 @@ export class CodexAgent {
     const available = client.isAvailable;
     client.isAvailable = () => this.ready && available();
     this.handlers = {
+      ...resourceHandlers(
+        this.resources,
+        (id) => {
+          const thread = this.threadFor(id);
+          return { sessionId: thread.id, cwd: thread.cwd || '' };
+        },
+        (id, bytes, mime) => this.client.uploadResource(id, bytes, mime),
+      ),
       /**
        * 将新建命令交给当前适配器，沿用中心分配的会话标识。
        * @param p 该能力对应的已解析命令参数。
@@ -679,9 +691,17 @@ export class CodexAgent {
       limit: Math.min(100, Math.max(1, limit)),
       sortDirection: 'desc',
     });
-    const events = (page.data || [])
-      .map(({ turnId, item }) => historyEvent(thread.id, turnId, item, null))
-      .filter(Boolean);
+    const events = [];
+    for (const { turnId, item } of page.data || []) {
+      const event = historyEvent(thread.id, turnId, item, null);
+      if (!event) continue;
+      event.attachments = await collectAttachments(
+        this.resources,
+        { sessionId: thread.id, cwd: thread.cwd || '' },
+        item.content || item.result,
+      );
+      events.push(event);
+    }
     return { events, nextCursor: page.nextCursor || null };
   }
 
@@ -1031,7 +1051,16 @@ export class CodexAgent {
     const key = `${turnId}:${item.id}:${completed ? 'completed' : 'started'}`;
     this.items.set(`${threadId}:${item.id}`, item);
     if (this.items.size > 2000) this.items.delete(this.items.keys().next().value!);
-    const fields = { createdAt, turnId, itemId: item.id, phase: item.phase };
+    const thread = this.threads.get(threadId);
+    const attachments =
+      completed && thread
+        ? await collectAttachments(
+            this.resources,
+            { sessionId: threadId, cwd: thread.cwd || '' },
+            item.content || item.result,
+          )
+        : [];
+    const fields = { createdAt, turnId, itemId: item.id, phase: item.phase, attachments };
     if (item.type === 'userMessage' && completed) {
       await this.event(threadId, 'message.user', key, {
         ...fields,

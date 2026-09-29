@@ -9,7 +9,7 @@ import os from 'node:os';
 import { readCodexHostIndex } from '../src/adapters/codex/codex-host-index.js';
 import { createTestAgent } from './fixtures/agent.js';
 import type { EventInput, SessionInput } from '../src/types/domain.js';
-import { historyEvent } from '../src/adapters/codex/codex-history.js';
+import { historyEvent, toolResult } from '../src/adapters/codex/codex-history.js';
 
 test('host index includes archived and legacy records and never modifies the source database', async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'xiaomeng-host-test-'));
@@ -44,6 +44,11 @@ test('host index includes archived and legacy records and never modifies the sou
 });
 
 test('tool history keeps text while excluding binary image payloads and metadata', () => {
+  assert.equal(toolResult([{ type: 'image', data: 'binary-payload' }]), '[图片结果]');
+  assert.equal(
+    toolResult({ type: 'input_image', image_url: 'data:image/png;base64,binary-payload' }),
+    '[图片结果]',
+  );
   const event = historyEvent('thread', 'turn', {
     id: 'tool',
     type: 'mcpToolCall',

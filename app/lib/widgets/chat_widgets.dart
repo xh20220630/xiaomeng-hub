@@ -7,6 +7,7 @@ import 'markdown_text.dart';
 import 'mascot.dart';
 import 'activity_group.dart';
 import 'copy_action.dart';
+import 'resource_attachments.dart';
 
 /// Renders a single [ChatMessage] in the F2 conversation. [onWaitingTap] fires
 /// when the user taps the pending-approval capsule (capsuleWaiting).
@@ -18,6 +19,18 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final body = _body(context);
+    if (message.attachments.isEmpty ||
+        [ChatKind.commentary, ChatKind.thinking].contains(message.kind)) {
+      return body;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [body, ResourceAttachments(message.attachments)],
+    );
+  }
+
+  Widget _body(BuildContext context) {
     switch (message.kind) {
       case ChatKind.timestamp:
         return _Timestamp(message.createdAt);

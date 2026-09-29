@@ -1,5 +1,6 @@
 /** 业务服务协调Agent 注册、隔离与命令分发，通过仓储和适配器访问外部状态。 */
 import type { AgentRow, RemoteSessionRow, CommandRow, JsonRow } from '../types/storage.js';
+import { validateAttachments } from '../resources/attachments.js';
 import type {
   AgentProfile,
   AgentView,
@@ -26,6 +27,9 @@ import { localAgent } from '../adapters/claude/local-agent.js';
 import { agentNotifications } from '../events/agent-events.js';
 
 export const CAPABILITIES = [
+  'resources.resolve',
+  'resources.read',
+  'resources.list',
   'message.send',
   'message.steer',
   'session.start',
@@ -596,6 +600,7 @@ export function appendRemoteEvent(
   if (!EVENT_NAMES[type]) fail(400, 'Unsupported event type');
   const eventKey = `${row.id}:${string(body.eventId, 'eventId')}`;
   const event = {
+    attachments: validateAttachments(body.attachments),
     event_key: body.eventId,
     hook_event_name: EVENT_NAMES[type],
     detail: text,
@@ -1057,7 +1062,10 @@ export function completeCommand(agentId: string, id: string, body: CommandReceip
  */
 function finishCommand(row: CommandRow, result: CommandReceipt) {
   repository.finishCommand(result.ok ? 'succeeded' : 'failed', JSON.stringify(result), row.id);
-  if (!['history.read', 'agent.catalog', 'agent.action'].includes(row.type))
+  if (
+    !row.type.startsWith('resources.') &&
+    !['history.read', 'agent.catalog', 'agent.action'].includes(row.type)
+  )
     broadcast({ type: 'command.result', ...commandInfo(row.id), approvalId: row.approval_id });
   if (row.approval_id && result.ok) {
     const approval = remoteApproval(row.approval_id)!;

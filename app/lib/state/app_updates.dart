@@ -164,6 +164,7 @@ class AppUpdates extends ChangeNotifier {
           : ready
           ? '更新已准备好，可以安装'
           : '发现新版本 ${next.version.name}';
+      if (releases.notice != null) message = '$message；${releases.notice}';
     } catch (error) {
       message = _error(error, '检查更新失败，请检查网络后重试');
     } finally {

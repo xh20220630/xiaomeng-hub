@@ -61,8 +61,27 @@ class Session {
   );
 }
 
+class ResourceAttachment {
+  final String reference, name, kind;
+  final bool snapshot;
+  const ResourceAttachment({
+    required this.reference,
+    required this.name,
+    required this.kind,
+    this.snapshot = false,
+  });
+  factory ResourceAttachment.fromJson(Map<String, dynamic> json) =>
+      ResourceAttachment(
+        reference: json['reference'] as String,
+        name: json['name'] as String,
+        kind: json['kind'] as String,
+        snapshot: json['snapshot'] == true,
+      );
+}
+
 /// One hook event = one row on the conversation timeline.
 class TaskEvent {
+  final List<ResourceAttachment> attachments;
   final int? id;
   final String? eventKey;
   final String sessionId;
@@ -80,6 +99,7 @@ class TaskEvent {
   final int? createdAt;
 
   const TaskEvent({
+    this.attachments = const [],
     this.id,
     this.eventKey,
     required this.sessionId,
@@ -98,6 +118,17 @@ class TaskEvent {
   });
 
   factory TaskEvent.fromJson(Map<String, dynamic> j) => TaskEvent(
+    attachments: (j['attachments'] as List? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .where(
+          (a) =>
+              a['reference'] is String &&
+              a['name'] is String &&
+              ['file', 'image'].contains(a['kind']),
+        )
+        .take(12)
+        .map(ResourceAttachment.fromJson)
+        .toList(),
     id: (j['id'] as num?)?.toInt(),
     eventKey: j['event_key'] as String?,
     sessionId: j['session_id'] as String,

@@ -1,4 +1,5 @@
 /** 中心服务的领域契约；显式区分远端输入、存储行与客户端视图，保留现有协议字段名。 */
+import type { ResourceAttachment, ResourceRequest } from './resources.js';
 
 /** 下一轮执行的可选设置，不隐式更改正在运行的轮次。 */
 export interface SessionSettings {
@@ -254,6 +255,7 @@ export interface ProjectView {
 
 /** 历史记录与实时追加共用的事件格式。 */
 export interface TaskEvent {
+  attachments?: ResourceAttachment[];
   /** 存储序号或页面内顺序。 */
   id?: number;
   /** 跨同步去重的事件键。 */
@@ -290,6 +292,7 @@ export interface TaskEvent {
 
 /** Agent 上报事件；瞬时 delta 不进入历史存储。 */
 export interface EventInput {
+  attachments?: ResourceAttachment[];
   /** 所属主机会话 ID。 */
   sessionId?: string;
   /** 协议事件类别。 */
@@ -326,6 +329,7 @@ export interface EventInput {
 
 /** 中心到 Agent 的操作参数；不同操作使用对应字段。 */
 export interface CommandPayload {
+  resource?: ResourceRequest;
   /** 目标主机会话。 */
   sessionId?: string;
   /** 新建会话的主机项目。 */

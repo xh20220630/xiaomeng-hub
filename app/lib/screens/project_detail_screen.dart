@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models.dart';
+import 'resource_preview_screen.dart';
 import '../state/monitor.dart';
 import '../services/ws_service.dart';
 import '../theme/tokens.dart';
@@ -609,8 +610,23 @@ class _TopBar extends StatelessWidget {
               if (v == 'new') onNewSession();
               if (v == 'switch') onSwitchSession();
               if (v == 'stop') onStop?.call();
+              if (v == 'files' && currentSessionId != null) {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ResourcePreviewScreen(
+                      sessionId: currentSessionId!,
+                      reference: '.',
+                    ),
+                  ),
+                );
+              }
             },
             itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'files',
+                enabled: currentSessionId != null,
+                child: const Text('项目文件'),
+              ),
               if (onStop != null)
                 const PopupMenuItem(value: 'stop', child: Text('停止当前任务')),
               PopupMenuItem(

@@ -6,6 +6,7 @@ import { createPairing } from './routes/pairing.routes.js';
 import hooksRouter from './routes/hook.routes.js';
 import apiRouter from './routes/api.routes.js';
 import agentRouter from './routes/agent.routes.js';
+import { createResourceRouter } from './routes/resource.routes.js';
 import { allAgents } from './services/agent-directory.service.js';
 import { disconnectUnauthorizedClients } from './transport/websocket.js';
 import { requestToken, isLoopback, errorHandler } from './middleware/http.js';
@@ -63,6 +64,7 @@ export function createApp() {
   app.get('/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
   if (process.env.LOCAL_CLAUDE === '0') app.use('/hooks', (_req, res) => res.json({}));
   else app.use('/hooks', hooksRouter);
+  app.use('/api', createResourceRouter(!!AUTH_TOKEN, isAuthorized));
   app.use('/api', apiRouter);
   app.use('/agent', agentRouter);
   app.use(errorHandler);

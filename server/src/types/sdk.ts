@@ -7,6 +7,9 @@ export type CommandInput<K extends keyof CommandPayload> = CommandPayload &
 
 /** 每种远程操作的参数要求。 */
 export interface CommandInputs {
+  'resources.resolve': CommandInput<'sessionId' | 'resource'>;
+  'resources.read': CommandInput<'sessionId' | 'resource'>;
+  'resources.list': CommandInput<'sessionId' | 'resource'>;
   /** 续聊必须指定会话与指令。 */
   'message.send': CommandInput<'sessionId' | 'text'>;
   /** 向执行中的会话追加指令。 */

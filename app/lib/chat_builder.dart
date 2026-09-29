@@ -27,6 +27,7 @@ class TodoItem {
 }
 
 class ChatMessage {
+  final List<ResourceAttachment> attachments;
   final ChatKind kind;
   final String? text;
   final String? toolTitle; // "Bash · npm test" (legacy)
@@ -45,6 +46,7 @@ class ChatMessage {
 
   const ChatMessage(
     this.kind, {
+    this.attachments = const [],
     this.text,
     this.toolTitle,
     this.toolName,
@@ -153,6 +155,9 @@ List<ChatMessage> buildChat(
         toolArgs: args,
         toolTitle: (args != null && args.isNotEmpty) ? '$tool · $args' : tool,
         toolOutput: post?.detail,
+        attachments: post?.attachments.isNotEmpty == true
+            ? post!.attachments
+            : pre.attachments,
         ok: post?.hookEventName == 'PostToolUseFailure' ? false : post?.ok,
         active: active || post == null,
         createdAt: (post ?? pre).createdAt,
@@ -202,6 +207,7 @@ List<ChatMessage> buildChat(
         out.add(
           ChatMessage(
             ChatKind.userText,
+            attachments: e.attachments,
             id: e.itemId ?? e.eventKey ?? 'user:${e.id}:${e.createdAt}',
             turnId: e.turnId,
             text: (e.detail?.isNotEmpty ?? false) ? e.detail : '用户指令',
@@ -210,7 +216,8 @@ List<ChatMessage> buildChat(
         );
         break;
       case 'AssistantText':
-        if (e.detail?.trim().isNotEmpty ?? false) {
+        if ((e.detail?.trim().isNotEmpty ?? false) ||
+            e.attachments.isNotEmpty) {
           out.add(
             ChatMessage(
               e.phase == 'commentary'
@@ -219,6 +226,7 @@ List<ChatMessage> buildChat(
               id: e.itemId ?? e.eventKey ?? 'answer:${e.id}:${e.createdAt}',
               turnId: e.turnId,
               text: e.detail,
+              attachments: e.attachments,
               createdAt: e.createdAt,
             ),
           );

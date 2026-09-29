@@ -1,6 +1,6 @@
 {
   "name": "claude-monitor-server",
-  "version": "2.0.5",
+  "version": "2.0.8",
   "private": true,
   "type": "module",
   "description": "LAN agent task monitoring and remote operations platform with a Claude Code adapter.",
@@ -27,6 +27,7 @@
   "dependencies": {
     "express": "^4.21.2",
     "qrcode": "^1.5.4",
+    "sharp": "^0.35.5",
     "ws": "^8.18.0"
   },
   "devDependencies": {

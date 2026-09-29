@@ -10,6 +10,7 @@ import '../theme/tokens.dart';
 import 'approval_drawer.dart';
 import 'activity_group.dart';
 import 'chat_widgets.dart';
+import 'host_resource_scope.dart';
 
 class ConversationTimeline extends ConsumerStatefulWidget {
   final Project project;
@@ -208,7 +209,7 @@ class _ConversationTimelineState extends ConsumerState<ConversationTimeline> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
-                'assets/mascot-v2/hero-welcome.png',
+              'assets/mascot-v2/hero-welcome.png',
               width: 144,
               height: 144,
               cacheWidth: 320,
@@ -227,124 +228,130 @@ class _ConversationTimelineState extends ConsumerState<ConversationTimeline> {
         ),
       );
     }
-    return Column(
-      children: [
-        if (history.error != null)
-          MaterialBanner(
-            content: Text(history.error!, style: AppFont.ui(size: 12)),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  final controller = ref.read(historyProvider(sid).notifier);
-                  if (history.failedOlder) {
-                    controller.loadMore();
-                  } else {
-                    controller.refresh();
-                  }
-                },
-                child: const Text('重试'),
-              ),
-            ],
-          ),
-        Expanded(
-          child: Stack(
-            children: [
-              ListView.builder(
-                key: PageStorageKey('conversation:$sid'),
-                controller: _scroll,
-                reverse: true,
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-                itemCount: entries.length + 1,
-                findChildIndexCallback: (key) =>
-                    key is ValueKey<String> ? entryIndices[key.value] : null,
-                itemBuilder: (context, index) {
-                  if (index == entries.length) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: history.loadingOlder
-                            ? Semantics(
-                                label: '正在读取历史消息',
-                                liveRegion: true,
-                                child: SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 1.5,
+    return HostResourceScope(
+      sessionId: sid,
+      child: Column(
+        children: [
+          if (history.error != null)
+            MaterialBanner(
+              content: Text(history.error!, style: AppFont.ui(size: 12)),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    final controller = ref.read(historyProvider(sid).notifier);
+                    if (history.failedOlder) {
+                      controller.loadMore();
+                    } else {
+                      controller.refresh();
+                    }
+                  },
+                  child: const Text('重试'),
+                ),
+              ],
+            ),
+          Expanded(
+            child: Stack(
+              children: [
+                ListView.builder(
+                  key: PageStorageKey('conversation:$sid'),
+                  controller: _scroll,
+                  reverse: true,
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                  itemCount: entries.length + 1,
+                  findChildIndexCallback: (key) =>
+                      key is ValueKey<String> ? entryIndices[key.value] : null,
+                  itemBuilder: (context, index) {
+                    if (index == entries.length) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: history.loadingOlder
+                              ? Semantics(
+                                  label: '正在读取历史消息',
+                                  liveRegion: true,
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1.5,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  history.loading
+                                      ? '正在读取…'
+                                      : history.cursor == null
+                                      ? '会话的起点'
+                                      : '',
+                                  style: AppFont.ui(
+                                    size: 11,
+                                    color: AppColors.textPlaceholder,
                                   ),
                                 ),
+                        ),
+                      );
+                    }
+                    final entry = entries[entries.length - index - 1];
+                    final message = entry.messages.firstOrNull;
+                    return RepaintBoundary(
+                      key: ValueKey(entry.id),
+                      child: Padding(
+                        key: _entryKeys.putIfAbsent(entry.id, GlobalKey.new),
+                        padding: const EdgeInsets.only(bottom: 22),
+                        child: entry.activity
+                            ? ActivityGroup(
+                                messages: entry.messages,
+                                running: running && index == 0,
+                                offline: !connected || !widget.project.online,
                               )
-                            : Text(
-                                history.loading
-                                    ? '正在读取…'
-                                    : history.cursor == null
-                                    ? '会话的起点'
-                                    : '',
-                                style: AppFont.ui(
-                                  size: 11,
-                                  color: AppColors.textPlaceholder,
-                                ),
+                            : ChatBubble(
+                                message!,
+                                onWaitingTap:
+                                    message.kind == ChatKind.capsuleWaiting &&
+                                        approval != null
+                                    ? () => showApprovalDrawer(
+                                        context,
+                                        ref,
+                                        approval,
+                                      )
+                                    : null,
                               ),
                       ),
                     );
-                  }
-                  final entry = entries[entries.length - index - 1];
-                  final message = entry.messages.firstOrNull;
-                  return RepaintBoundary(
-                    key: ValueKey(entry.id),
-                    child: Padding(
-                      key: _entryKeys.putIfAbsent(entry.id, GlobalKey.new),
-                      padding: const EdgeInsets.only(bottom: 22),
-                      child: entry.activity
-                          ? ActivityGroup(
-                              messages: entry.messages,
-                              running: running && index == 0,
-                              offline: !connected || !widget.project.online,
-                            )
-                          : ChatBubble(
-                              message!,
-                              onWaitingTap:
-                                  message.kind == ChatKind.capsuleWaiting &&
-                                      approval != null
-                                  ? () => showApprovalDrawer(
-                                      context,
-                                      ref,
-                                      approval,
-                                    )
-                                  : null,
-                            ),
-                    ),
-                  );
-                },
-              ),
-              if (_awayFromLatest)
-                Positioned(
-                  bottom: 12,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: FilledButton.tonalIcon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.bg,
-                        foregroundColor: AppColors.ink,
-                        elevation: 3,
-                        minimumSize: const Size(48, 44),
-                        side: const BorderSide(color: AppColors.borderWarm),
+                  },
+                ),
+                if (_awayFromLatest)
+                  Positioned(
+                    bottom: 12,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: FilledButton.tonalIcon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.bg,
+                          foregroundColor: AppColors.ink,
+                          elevation: 3,
+                          minimumSize: const Size(48, 44),
+                          side: const BorderSide(color: AppColors.borderWarm),
+                        ),
+                        onPressed: () => _scroll.animateTo(
+                          0,
+                          duration: const Duration(milliseconds: 260),
+                          curve: Curves.easeOutCubic,
+                        ),
+                        icon: const Icon(
+                          Icons.arrow_downward_rounded,
+                          size: 17,
+                        ),
+                        label: const Text('回到最新'),
                       ),
-                      onPressed: () => _scroll.animateTo(
-                        0,
-                        duration: const Duration(milliseconds: 260),
-                        curve: Curves.easeOutCubic,
-                      ),
-                      icon: const Icon(Icons.arrow_downward_rounded, size: 17),
-                      label: const Text('回到最新'),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

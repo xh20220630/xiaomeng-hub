@@ -143,6 +143,24 @@ export class AgentClient {
     return result as T;
   }
 
+  async uploadResource(transferId: string, bytes: Buffer, mimeType: string) {
+    if (!/^[\w-]{1,128}$/.test(transferId) || bytes.length > 20 * 1024 * 1024)
+      throw new Error('Invalid resource transfer');
+    const response = await fetch(`${this.hubUrl}/agent/resources/transfers/${transferId}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.credentials?.token || ''}`,
+        'Content-Type': 'application/octet-stream',
+        'X-Resource-Type': mimeType,
+      },
+      body: new Uint8Array(bytes),
+      signal: AbortSignal.timeout(20000),
+      redirect: 'error',
+    });
+    if (!response.ok) throw new Error(`资源传输失败（${response.status}）`);
+    return { uploaded: true };
+  }
+
   /**
    * 建立执行通道并同步必要身份，后续操作才可开始。
    * @returns 操作完成的异步信号。

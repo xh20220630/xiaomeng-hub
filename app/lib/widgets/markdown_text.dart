@@ -3,6 +3,7 @@ import 'package:gpt_markdown/gpt_markdown.dart';
 import '../theme/tokens.dart';
 import 'copy_action.dart';
 import 'markdown_link.dart';
+import 'host_resource_image.dart';
 
 /// Accepts incomplete Markdown while a response is streaming.
 class MarkdownText extends StatelessWidget {
@@ -22,6 +23,7 @@ class MarkdownText extends StatelessWidget {
     return GptMarkdown(
       text,
       onLinkTap: (url, title) => openMarkdownLink(context, url),
+      imageBuilder: (context, url, width, height) => HostResourceImage(url),
       style: AppFont.ui(
         size: size,
         weight: FontWeight.w400,

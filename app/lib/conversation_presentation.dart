@@ -84,7 +84,8 @@ List<TaskEvent> mergeConversationEvents(
     );
     if (index >= 0) {
       // History can enrich events cached before phase metadata was introduced.
-      if (result[index].phase == null || event.phase != null) {
+      if ((result[index].phase == null || event.phase != null) &&
+          (result[index].attachments.isEmpty || event.attachments.isNotEmpty)) {
         result[index] = event;
       }
       insertion = index + 1;

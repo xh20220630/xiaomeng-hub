@@ -1,5 +1,6 @@
 /** 将 URL 绑定到控制器，业务规则由服务层维护。 */
-import { Router } from 'express';
+import { Router, raw } from 'express';
+import { receiveResource, acceptResourceTransfer } from '../services/resource.service.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import * as controller from '../controllers/agent.controller.js';
 
@@ -8,6 +9,12 @@ import { authenticateAgent } from '../middleware/agent-auth.js';
 const router = Router();
 router.post('/register', asyncHandler(controller.register));
 router.use(authenticateAgent);
+router.post(
+  '/resources/transfers/:id',
+  acceptResourceTransfer,
+  raw({ type: 'application/octet-stream', limit: '20mb' }),
+  receiveResource,
+);
 router.post('/heartbeat', asyncHandler(controller.heartbeat));
 router.get('/stream', asyncHandler(controller.stream));
 router.post('/profile', asyncHandler(controller.profile));

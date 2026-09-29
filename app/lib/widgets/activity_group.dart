@@ -5,6 +5,8 @@ import '../conversation_presentation.dart';
 import '../theme/tokens.dart';
 import 'markdown_text.dart';
 import 'mascot.dart';
+import 'resource_attachments.dart';
+import 'host_resource_scope.dart';
 
 class ActivityGroup extends StatefulWidget {
   final List<ChatMessage> messages;
@@ -165,6 +167,12 @@ class _ActivityGroupState extends State<ActivityGroup> {
               ),
             ),
           ),
+          if (!_expanded &&
+              widget.messages.any((m) => m.attachments.isNotEmpty))
+            TextButton(
+              onPressed: () => setState(() => _expanded = true),
+              child: const Text('查看图片与文件附件'),
+            ),
           if (_expanded)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -179,7 +187,9 @@ class _ActivityGroupState extends State<ActivityGroup> {
                         '显示更早的 ${widget.messages.length - _visible} 条记录',
                       ),
                     ),
-                  for (final message in rows)
+                  for (final message in rows) ...[
+                    if (message.attachments.isNotEmpty)
+                      ResourceAttachments(message.attachments),
                     if (message.kind == ChatKind.commentary)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(9, 12, 9, 10),
@@ -194,6 +204,7 @@ class _ActivityGroupState extends State<ActivityGroup> {
                         message: message,
                         running: running && message.active,
                       ),
+                  ],
                 ],
               ),
             ),
@@ -290,14 +301,22 @@ class ActivityToolRow extends StatelessWidget {
   }
 }
 
-Future<void> showActivityDetails(BuildContext context, ChatMessage message) =>
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: AppColors.bg,
-      builder: (context) => _ActivityDetails(message),
-    );
+Future<void> showActivityDetails(BuildContext context, ChatMessage message) {
+  final scope = HostResourceScope.maybeOf(context);
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    backgroundColor: AppColors.bg,
+    builder: (context) => scope == null
+        ? _ActivityDetails(message)
+        : HostResourceScope(
+            sessionId: scope.sessionId,
+            baseResourceId: scope.baseResourceId,
+            child: _ActivityDetails(message),
+          ),
+  );
+}
 
 class _ActivityDetails extends StatefulWidget {
   final ChatMessage message;
@@ -402,21 +421,27 @@ class _ActivityDetailsState extends State<_ActivityDetails> {
                   ),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(14),
-                    child: SelectionArea(
-                      child: Text(
-                        text.isEmpty
-                            ? message.active
-                                  ? '等待主机返回结果…'
-                                  : '没有文本结果'
-                            : shown,
-                        style: AppFont.mono(
-                          size: 12,
-                          height: 1.65,
-                          color: message.ok == false
-                              ? AppColors.danger
-                              : AppColors.bodySecondary,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (!_input) ResourceAttachments(message.attachments),
+                        SelectionArea(
+                          child: Text(
+                            text.isEmpty
+                                ? message.active
+                                      ? '等待主机返回结果…'
+                                      : '没有文本结果'
+                                : shown,
+                            style: AppFont.mono(
+                              size: 12,
+                              height: 1.65,
+                              color: message.ok == false
+                                  ? AppColors.danger
+                                  : AppColors.bodySecondary,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),

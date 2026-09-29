@@ -19,13 +19,21 @@ export const codexEventKey = (threadId: string, key: string) =>
  */
 export function toolResult(result: unknown): string {
   if (typeof result === 'string') return result;
-  const content =
-    result && typeof result === 'object' && 'content' in result ? result.content : undefined;
+  const content = Array.isArray(result)
+    ? result
+    : result && typeof result === 'object' && 'content' in result
+      ? result.content
+      : result &&
+          typeof result === 'object' &&
+          'type' in result &&
+          ['image', 'input_image', 'localImage'].includes(String(result.type))
+        ? [result]
+        : undefined;
   if (Array.isArray(content))
     return (content as CodexContent[])
       .map((block) => {
         if (block.type === 'text') return block.text || '';
-        if (block.type === 'image') return '[图片结果]';
+        if (['image', 'input_image', 'localImage'].includes(block.type)) return '[图片结果]';
         if (block.type === 'audio') return '[音频结果]';
         if (block.type === 'resource_link') return block.title || block.name || block.uri;
         if (block.type === 'resource') return block.resource?.text || '[附件结果]';

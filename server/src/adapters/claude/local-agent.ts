@@ -17,6 +17,9 @@ export function localAgent(): AgentView {
     nodeName: os.hostname(),
     online: true,
     capabilities: [
+      'resources.resolve',
+      'resources.read',
+      'resources.list',
       'message.send',
       'session.start',
       'session.stop',
