@@ -9,6 +9,7 @@ import os from 'node:os';
 import { readCodexHostIndex } from '../src/adapters/codex/codex-host-index.js';
 import { createTestAgent } from './fixtures/agent.js';
 import type { EventInput, SessionInput } from '../src/types/domain.js';
+import type { CodexTurn } from '../src/types/codex.js';
 import { historyEvent, toolResult } from '../src/adapters/codex/codex-history.js';
 
 test('host index includes archived and legacy records and never modifies the source database', async () => {
@@ -231,4 +232,331 @@ test('history pages preserve cursor and stable item identities without resuming 
     historyEvent('thread', 'turn', { id: 'output', type: 'agentMessage', text: 'Full output' })!
       .event_key,
   );
+});
+
+test('fresh host index status replaces cached turns without reverting a newer live turn', async () => {
+  const project = path.resolve('host-project');
+  const published: SessionInput[] = [];
+  let updatedAt = 2000;
+  let lastTurnStatus = 'completed';
+  const adapter = createTestAgent({
+    rpc: Object.assign(new EventEmitter(), {
+      request: async () => ({ data: [], nextCursor: null }),
+    }),
+    client: {
+      isAvailable: () => true,
+      request: async (_: string, body: SessionInput) => published.push(body),
+    },
+    projects: [project],
+    hostScope: true,
+    lazyHistory: true,
+    hostIndex: async () => ({
+      projects: [],
+      threads: [
+        { id: 'thread', cwd: project, updatedAt, lastTurnStatus, status: { type: 'notLoaded' } },
+      ],
+    }),
+  });
+  adapter.threads.set('thread', {
+    id: 'thread',
+    cwd: project,
+    updatedAt: 1000,
+    status: { type: 'active' },
+    turns: [{ id: 'old-turn', status: 'inProgress' }],
+  });
+  adapter.activeTurns.set('thread', 'old-turn');
+  await adapter.syncIndex();
+  assert.equal(published.at(-1)!.session.status, 'done');
+  assert.equal(adapter.activeTurns.has('thread'), false);
+
+  updatedAt = 3000;
+  lastTurnStatus = 'inProgress';
+  await adapter.syncIndex();
+  assert.equal(published.at(-1)!.session.status, 'running');
+
+  adapter.threads.set('thread', {
+    id: 'thread',
+    cwd: project,
+    updatedAt: 4000,
+    status: { type: 'active' },
+    turns: [{ id: 'new-turn', status: 'inProgress' }],
+  });
+  adapter.activeTurns.set('thread', 'new-turn');
+  lastTurnStatus = 'completed';
+  await adapter.syncIndex();
+  assert.equal(published.at(-1)!.session.status, 'running');
+  assert.equal(adapter.activeTurns.get('thread'), 'new-turn');
+});
+
+for (const [turnStatus, sessionStatus] of [
+  ['completed', 'done'],
+  ['failed', 'error'],
+  ['interrupted', 'paused'],
+]) {
+  test(`same-second host index ${turnStatus} resolves a missed completion of the active turn`, async () => {
+    const project = path.resolve('host-project');
+    const published: SessionInput[] = [];
+    let reads = 0;
+    const adapter = createTestAgent({
+      rpc: Object.assign(new EventEmitter(), {
+        request: async (method: string) => {
+          if (method !== 'thread/read') return { data: [], nextCursor: null };
+          reads++;
+          return {
+            thread: {
+              id: 'thread',
+              cwd: project,
+              updatedAt: 2000,
+              status: { type: 'active' },
+              turns: [{ id: 'active-turn', status: turnStatus }],
+            },
+          };
+        },
+      }),
+      client: {
+        isAvailable: () => true,
+        request: async (_: string, body: SessionInput) => published.push(body),
+      },
+      projects: [project],
+      hostScope: true,
+      lazyHistory: true,
+      hostIndex: async () => ({
+        projects: [],
+        threads: [
+          {
+            id: 'thread',
+            cwd: project,
+            updatedAt: 2000,
+            lastTurnStatus: turnStatus,
+            status: { type: 'notLoaded' },
+          },
+        ],
+      }),
+    });
+    adapter.threads.set('thread', {
+      id: 'thread',
+      cwd: project,
+      updatedAt: 2000.8,
+      status: { type: 'active' },
+      turns: [{ id: 'active-turn', status: 'inProgress' }],
+    });
+    adapter.activeTurns.set('thread', 'active-turn');
+    adapter.streams.set('thread', 'Processing');
+    await adapter.syncIndex();
+    await adapter.syncIndex();
+    assert.equal(published.at(-1)!.session.status, sessionStatus);
+    assert.equal(adapter.activeTurns.has('thread'), false);
+    assert.equal(adapter.streams.has('thread'), false);
+    assert.equal(reads, 1);
+  });
+}
+
+test('same-second completed host snapshot cannot end a different newly active turn', async () => {
+  const project = path.resolve('host-project');
+  const published: SessionInput[] = [];
+  const adapter = createTestAgent({
+    rpc: Object.assign(new EventEmitter(), {
+      request: async (method: string) =>
+        method === 'thread/read'
+          ? {
+              thread: {
+                id: 'thread',
+                cwd: project,
+                updatedAt: 2000,
+                turns: [{ id: 'old-turn', status: 'completed' }],
+              },
+            }
+          : { data: [], nextCursor: null },
+    }),
+    client: {
+      isAvailable: () => true,
+      request: async (_: string, body: SessionInput) => published.push(body),
+    },
+    projects: [project],
+    hostScope: true,
+    lazyHistory: true,
+    hostIndex: async () => ({
+      projects: [],
+      threads: [
+        {
+          id: 'thread',
+          cwd: project,
+          updatedAt: 2000,
+          lastTurnStatus: 'completed',
+          status: { type: 'notLoaded' },
+        },
+      ],
+    }),
+  });
+  adapter.threads.set('thread', {
+    id: 'thread',
+    cwd: project,
+    updatedAt: 2000,
+    status: { type: 'active' },
+    turns: [{ id: 'old-turn', status: 'completed' }],
+  });
+  adapter.activeTurns.set('thread', 'new-turn');
+  adapter.streams.set('thread', 'New reply');
+  await adapter.syncIndex();
+  assert.equal(published.at(-1)!.session.status, 'running');
+  assert.equal(adapter.activeTurns.get('thread'), 'new-turn');
+  assert.equal(adapter.streams.get('thread'), 'New reply');
+});
+
+test('host index without lastTurnStatus verifies a terminal active turn before clearing cached state', async () => {
+  const project = path.resolve('host-project');
+  const published: SessionInput[] = [];
+  const adapter = createTestAgent({
+    rpc: Object.assign(new EventEmitter(), {
+      request: async (method: string) =>
+        method === 'thread/read'
+          ? {
+              thread: {
+                id: 'thread',
+                cwd: project,
+                updatedAt: 2001,
+                turns: [{ id: 'active-turn', status: 'completed' }],
+              },
+            }
+          : { data: [], nextCursor: null },
+    }),
+    client: {
+      isAvailable: () => true,
+      request: async (_: string, body: SessionInput) => published.push(body),
+    },
+    projects: [project],
+    hostScope: true,
+    lazyHistory: true,
+    hostIndex: async () => ({
+      projects: [],
+      threads: [{ id: 'thread', cwd: project, updatedAt: 2001, status: { type: 'notLoaded' } }],
+    }),
+  });
+  adapter.threads.set('thread', {
+    id: 'thread',
+    cwd: project,
+    updatedAt: 2000.8,
+    status: { type: 'active' },
+    turns: [{ id: 'active-turn', status: 'inProgress' }],
+  });
+  adapter.activeTurns.set('thread', 'active-turn');
+  await adapter.syncIndex();
+  assert.equal(published.at(-1)!.session.status, 'done');
+  assert.equal(adapter.activeTurns.has('thread'), false);
+});
+
+for (const tracked of [true, false]) {
+  test(`late turn completion preserves a new ${tracked ? 'tracked' : 'cached'} active turn and imports old items`, async () => {
+    const project = path.resolve('host-project');
+    const published: SessionInput[] = [];
+    const events: EventInput[] = [];
+    const adapter = createTestAgent({
+      rpc: new EventEmitter(),
+      client: {
+        isAvailable: () => true,
+        request: async (_: string, body: SessionInput) => published.push(body),
+        event: async (_: string, type: string, fields: EventInput) =>
+          events.push({ type, ...fields }),
+      },
+      projects: [project],
+    });
+    const thread = {
+      id: 'thread',
+      cwd: project,
+      updatedAt: 2000.8,
+      status: { type: 'active' },
+      turns: [
+        { id: 'old-turn', status: 'inProgress' },
+        { id: 'new-turn', status: 'inProgress' },
+      ],
+    };
+    adapter.threads.set('thread', thread);
+    if (tracked) adapter.activeTurns.set('thread', 'new-turn');
+    adapter.streams.set('thread', 'New reply');
+    await adapter.publish(thread);
+    await adapter.notification({
+      method: 'turn/completed',
+      params: {
+        threadId: 'thread',
+        turn: {
+          id: 'old-turn',
+          status: 'completed',
+          items: [
+            {
+              id: 'old-output',
+              type: 'agentMessage',
+              text: 'Old final reply',
+              phase: 'final_answer',
+            },
+          ],
+        },
+      },
+    });
+    assert.equal(adapter.state(thread), 'running');
+    assert.equal(adapter.activeTurns.get('thread'), tracked ? 'new-turn' : undefined);
+    assert.equal(adapter.streams.get('thread'), 'New reply');
+    assert.equal(thread.status.type, 'active');
+    assert.equal(thread.updatedAt, 2000.8);
+    assert.equal(thread.turns.at(-1)!.id, 'new-turn');
+    assert.equal(thread.turns[0].status, 'completed');
+    assert.equal(
+      events.some((event) => event.type === 'assistant.done'),
+      false,
+    );
+    assert.ok(
+      events.some(
+        (event) =>
+          event.type === 'message.assistant' &&
+          event.turnId === 'old-turn' &&
+          event.text === 'Old final reply',
+      ),
+    );
+    assert.equal(published.length, 1);
+    assert.equal(published.at(-1)!.session.status, 'running');
+
+    await adapter.notification({
+      method: 'turn/completed',
+      params: { threadId: 'thread', turn: { id: 'new-turn', status: 'completed' } },
+    });
+    assert.equal(adapter.activeTurns.has('thread'), false);
+    assert.equal(adapter.streams.has('thread'), false);
+    assert.equal(published.at(-1)!.session.status, 'done');
+    assert.equal(events.filter((event) => event.type === 'assistant.done').length, 1);
+    assert.equal(events.at(-1)!.turnId, 'new-turn');
+  });
+}
+
+test('legacy completion without a turn ID finishes the currently tracked turn', async () => {
+  const project = path.resolve('host-project');
+  const published: SessionInput[] = [];
+  const events: EventInput[] = [];
+  const adapter = createTestAgent({
+    rpc: new EventEmitter(),
+    client: {
+      isAvailable: () => true,
+      request: async (_: string, body: SessionInput) => published.push(body),
+      event: async (_: string, type: string, fields: EventInput) =>
+        events.push({ type, ...fields }),
+    },
+    projects: [project],
+  });
+  adapter.threads.set('thread', {
+    id: 'thread',
+    cwd: project,
+    updatedAt: 2000.8,
+    status: { type: 'active' },
+    turns: [{ id: 'active-turn', status: 'inProgress' }],
+  });
+  adapter.activeTurns.set('thread', 'active-turn');
+  adapter.streams.set('thread', 'Processing');
+  await adapter.notification({
+    method: 'turn/completed',
+    params: { threadId: 'thread', turn: { status: 'completed' } as CodexTurn },
+  });
+  assert.equal(adapter.activeTurns.has('thread'), false);
+  assert.equal(adapter.streams.has('thread'), false);
+  assert.equal(adapter.threads.get('thread')!.turns!.at(-1)!.id, 'active-turn');
+  assert.equal(published.at(-1)!.session.status, 'done');
+  assert.equal(events.at(-1)!.type, 'assistant.done');
+  assert.equal(events.at(-1)!.turnId, 'active-turn');
 });

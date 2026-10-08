@@ -53,3 +53,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
 Node 测试使用临时配置、随机端口并禁用真实 Agent，验证正常退出、父进程断开、启动中退出、端口冲突及身份复用。Rust 测试验证导航范围与后端响应识别；Rust 编译前需运行过 `npm run prepare:host`。
+
+Windows 的 Rust 测试还会用内置 Node.js 验证带 `\\?\` 前缀、中文及空格的安装路径。Node.js 入口必须相对服务工作目录传入，否则安装版可能在模块加载时以 `EISDIR` 退出。
+
+可将 `XIAOMENG_TEST_RUNTIME` 设为安装目录下的 `runtime` 绝对路径，再运行 `npm run test:host`，直接验证安装包内的 Node.js 和后端。测试使用独立配置，不读取原有主机数据库或设备绑定。

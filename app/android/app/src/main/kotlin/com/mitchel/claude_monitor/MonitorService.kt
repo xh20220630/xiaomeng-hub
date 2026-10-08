@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
  * downstream frames into three kinds of notifications:
  *  1. the foreground notification itself = the Android 16 Live-Update capsule
  *     showing the most important project's status,
- *  2. "✅ 任务完成" one-shots on running→done transitions,
+ *  2. "✅ 任务完成" one-shots when an active task finishes,
  *  3. heads-up approval requests with 批准/拒绝 actions (ApprovalReceiver
  *     POSTs the decision straight to the server, no UI round-trip).
  *
@@ -282,10 +282,17 @@ class MonitorService : Service() {
 
     private fun onSnapshot(arr: JSONArray) {
         connectionState = "online"
+        val previous = projects.toMap()
         projects.clear()
         for (i in 0 until arr.length()) {
             val o = arr.optJSONObject(i) ?: continue
             val p = parseProject(o) ?: continue
+            val prev = previous[p.projectId]
+            // A snapshot may have been read before an already-delivered update.
+            if (prev != null && ProjectNotificationPolicy.isOlder(prev.lastEventAt, p.lastEventAt)) {
+                projects[p.projectId] = prev
+                continue
+            }
             projects[p.projectId] = p
             // Approvals still pending at (re)connect time deserve a heads-up too.
             if (p.status != "offline") o.optJSONObject("pendingApproval")?.let { notifyApprovalIfNew(it) }
@@ -296,10 +303,10 @@ class MonitorService : Service() {
     private fun onProjectUpdate(o: JSONObject) {
         val p = parseProject(o) ?: return
         val prev = projects[p.projectId]
+        if (prev != null && ProjectNotificationPolicy.isOlder(prev.lastEventAt, p.lastEventAt)) return
         projects[p.projectId] = p
 
-        // (b) running → done transition: fire the completion one-shot.
-        if (prev?.status == "running" && p.status == "done") notifyTaskDone(p)
+        if (ProjectNotificationPolicy.completesActiveTask(prev?.status, p.status)) notifyTaskDone(p)
 
         // (c) embedded pending approval that we haven't announced yet.
         if (p.status == "needs_approval") {

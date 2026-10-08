@@ -8,7 +8,9 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-const server = fileURLToPath(new URL('../../server', import.meta.url));
+const runtime = process.env.XIAOMENG_TEST_RUNTIME && path.resolve(process.env.XIAOMENG_TEST_RUNTIME);
+const server = runtime ? path.join(runtime, 'server') : fileURLToPath(new URL('../../server', import.meta.url));
+const node = runtime ? path.join(runtime, process.platform === 'win32' ? 'node.exe' : 'node') : process.execPath;
 
 async function freePort() {
   const listener = net.createServer();
@@ -35,7 +37,7 @@ async function fixture(t) {
     }
   });
   const start = (port, configName = 'config.json') => {
-    const child = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', 'dist/scripts/start-host.js'], {
+    const child = spawn(node, ['--disable-warning=ExperimentalWarning', 'dist/scripts/start-host.js'], {
       cwd: server,
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],

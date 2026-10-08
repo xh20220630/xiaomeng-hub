@@ -112,7 +112,7 @@ class ReleaseHistoryEntry {
   final int? build;
   final String title;
   final String notes;
-  final bool preview;
+  final bool? preview;
   final DateTime? publishedAt;
   final String? url;
 
@@ -131,6 +131,12 @@ class ReleaseHistoryEntry {
       installed != null &&
       version == installed.name &&
       (build == null || build == installed.build);
+
+  String get channelLabel => switch (preview) {
+    true => '测试版',
+    false => '正式版',
+    null => '渠道待确认',
+  };
 
   String get dateLabel {
     final date = publishedAt?.toLocal();
@@ -221,7 +227,7 @@ class ReleaseHistoryEntry {
         build: json['build'] as int?,
         title: json['title'] as String,
         notes: json['notes'] as String,
-        preview: json['preview'] as bool,
+        preview: json['preview'] as bool?,
         publishedAt: DateTime.tryParse(json['publishedAt'] as String? ?? ''),
         url: json['url'] as String?,
       );
@@ -230,7 +236,14 @@ class ReleaseHistoryEntry {
 class ReleaseHistoryPage {
   final List<ReleaseHistoryEntry> entries;
   final bool hasMore;
-  const ReleaseHistoryPage(this.entries, {required this.hasMore});
+  final bool partial;
+  final String? notice;
+  const ReleaseHistoryPage(
+    this.entries, {
+    required this.hasMore,
+    this.partial = false,
+    this.notice,
+  });
 }
 
 class ReleaseClient {
@@ -305,7 +318,7 @@ class ReleaseClient {
         if (limitReset.isAfter(retryAt)) retryAt = limitReset;
       }
       if (api) _apiRetryAt = retryAt;
-      throw _rateLimit(retryAt);
+      throw _rateLimit(retryAt, api: api);
     }
     if (response.statusCode == 403) {
       throw const _UpdateSourceException('GitHub 拒绝访问更新源（403），请切换网络后重试');
@@ -321,13 +334,15 @@ class ReleaseClient {
     return response;
   }
 
-  _UpdateSourceException _rateLimit(DateTime retryAt) {
+  _UpdateSourceException _rateLimit(DateTime retryAt, {bool api = true}) {
     final time = retryAt.toLocal();
     final label =
         '${time.hour.toString().padLeft(2, '0')}:'
         '${time.minute.toString().padLeft(2, '0')}:'
         '${time.second.toString().padLeft(2, '0')}';
-    return _UpdateSourceException('GitHub API 请求额度已用完，预计 $label 后恢复；可切换网络重试');
+    return _UpdateSourceException(
+      '${api ? 'GitHub API 请求额度已用完' : 'GitHub 发布站点请求受限'}，预计 $label 后恢复；可切换网络重试',
+    );
   }
 
   Future<dynamic> _json(String url) async {
@@ -336,10 +351,24 @@ class ReleaseClient {
   }
 
   Future<ReleaseHistoryPage> history({int page = 1}) async {
+    try {
+      return await _historyFromApi(page);
+    } on _UpdateSourceException catch (error) {
+      return _historyFromFeed(page, error);
+    } on TimeoutException catch (error) {
+      return _historyFromFeed(page, error);
+    } on http.ClientException catch (error) {
+      return _historyFromFeed(page, error);
+    } on FormatException catch (error) {
+      return _historyFromFeed(page, error);
+    }
+  }
+
+  Future<ReleaseHistoryPage> _historyFromApi(int page) async {
     final data = await _json(
       'https://api.github.com/repos/$updateRepository/releases?per_page=20&page=$page',
     );
-    if (data is! List) throw const UpdateException('版本历史返回格式异常，请重试');
+    if (data is! List) throw const FormatException('Invalid release history');
     final entries = <ReleaseHistoryEntry>[];
     // Reading release notes must not require a downloadable or signed APK.
     for (final value in data) {
@@ -356,6 +385,23 @@ class ReleaseClient {
     return ReleaseHistoryPage(entries, hasMore: data.length >= 20);
   }
 
+  Future<ReleaseHistoryPage> _historyFromFeed(int page, Object apiError) async {
+    if (page > 1) {
+      throw UpdateException('暂时无法加载更早版本：${_sourceError(apiError)}；已加载的说明仍可阅读');
+    }
+    try {
+      final entries = await _releaseFeed();
+      return ReleaseHistoryPage(
+        entries.values.toList(),
+        hasMore: false,
+        partial: true,
+        notice: '已通过官方发布订阅加载近期更新说明；完整历史与渠道信息可在 GitHub 发布页查看',
+      );
+    } catch (error) {
+      throw _bothSourcesFailed('加载版本历史', apiError, error);
+    }
+  }
+
   Future<AppRelease?> latest(AppVersion installed, bool previews) async {
     notice = null;
     try {
@@ -365,6 +411,8 @@ class ReleaseClient {
     } on TimeoutException catch (error) {
       return _latestFromFeed(installed, previews, error);
     } on http.ClientException catch (error) {
+      return _latestFromFeed(installed, previews, error);
+    } on FormatException catch (error) {
       return _latestFromFeed(installed, previews, error);
     }
   }
@@ -448,18 +496,65 @@ class ReleaseClient {
     return latest;
   }
 
+  Future<Map<String, ReleaseHistoryEntry>> _releaseFeed() async {
+    final response = await _read(
+      'https://github.com/$updateRepository/releases.atom',
+    );
+    final document = XmlDocument.parse(utf8.decode(response.bodyBytes));
+    if (document.rootElement.name.local != 'feed') {
+      throw const FormatException('Invalid release feed');
+    }
+    final records = <String, ReleaseHistoryEntry>{};
+    for (final entry in document.rootElement.findElements('entry')) {
+      final link = entry
+          .findElements('link')
+          .where((link) => link.getAttribute('rel') == 'alternate')
+          .firstOrNull;
+      final url = link?.getAttribute('href');
+      final tag = _releaseTag(url);
+      if (tag == null) continue;
+      final parsed = ReleaseHistoryEntry.fromGithub({'tag_name': tag});
+      if (parsed == null) continue;
+      records[tag] = ReleaseHistoryEntry(
+        id: tag,
+        version: parsed.version,
+        build: parsed.build,
+        title: entry.getElement('title')?.innerText ?? parsed.version,
+        notes: html2md.convert(
+          entry.getElement('content')?.innerText ?? '',
+          styleOptions: {'headingStyle': 'atx', 'codeBlockStyle': 'fenced'},
+          ignore: ['script', 'style'],
+        ),
+        // Atom 不提供 prerelease 标记，历史展示也不能根据标签名称推测渠道。
+        preview: null,
+        publishedAt: DateTime.tryParse(
+          entry.getElement('published')?.innerText ??
+              entry.getElement('updated')?.innerText ??
+              '',
+        ),
+        url: url,
+      );
+    }
+    if (records.isEmpty &&
+        document.rootElement.findElements('entry').isNotEmpty) {
+      throw const FormatException('No valid release entries');
+    }
+    return records;
+  }
+
   Future<AppRelease?> _latestFromFeed(
     AppVersion installed,
     bool previews,
     Object apiError,
   ) async {
     try {
-      final response = await _read(
-        'https://github.com/$updateRepository/releases.atom',
+      final records = await _releaseFeed();
+      final hadEntries = records.isNotEmpty;
+      records.removeWhere(
+        (_, entry) => !AppVersion.pattern.hasMatch(entry.version),
       );
-      final document = XmlDocument.parse(utf8.decode(response.bodyBytes));
-      if (document.rootElement.name.local != 'feed') {
-        throw const FormatException('Invalid release feed');
+      if (hadEntries && records.isEmpty) {
+        throw const FormatException('No valid release versions');
       }
       // Atom omits prerelease flags. Only GitHub's /latest redirect can establish
       // a stable release; never infer the installation channel from its tag name.
@@ -476,43 +571,20 @@ class ReleaseClient {
           throw const FormatException('Unknown stable release');
         }
       }
-      final records = <String, ({String notes, String version, int? build})>{};
-      for (final entry in document.rootElement.findElements('entry')) {
-        final link = entry
-            .findElements('link')
-            .where((link) => link.getAttribute('rel') == 'alternate')
-            .firstOrNull;
-        final tag = _releaseTag(link?.getAttribute('href'));
-        if (tag == null) continue;
-        final parsed = ReleaseHistoryEntry.fromGithub({'tag_name': tag});
-        if (parsed == null || !AppVersion.pattern.hasMatch(parsed.version)) {
-          continue;
-        }
-        records[tag] = (
-          version: parsed.version,
-          build: parsed.build,
-          notes: html2md.convert(
-            entry.getElement('content')?.innerText ?? '',
-            styleOptions: {'headingStyle': 'atx', 'codeBlockStyle': 'fenced'},
-            ignore: ['script', 'style'],
-          ),
-        );
-      }
       if (stableTag != null && !records.containsKey(stableTag)) {
         final parsed = ReleaseHistoryEntry.fromGithub({'tag_name': stableTag});
         if (parsed == null || !AppVersion.pattern.hasMatch(parsed.version)) {
           throw const FormatException('Unknown release version');
         }
-        records[stableTag] = (
+        records[stableTag] = ReleaseHistoryEntry(
+          id: stableTag,
           version: parsed.version,
           build: parsed.build,
+          title: parsed.title,
+          preview: false,
           notes:
               '[查看官方更新说明](https://github.com/$updateRepository/releases/tag/$stableTag)',
         );
-      }
-      if (records.isEmpty &&
-          document.rootElement.findElements('entry').isNotEmpty) {
-        throw const FormatException('No valid release entries');
       }
       AppRelease? latest;
       final ordered = records.entries.toList()
@@ -575,14 +647,28 @@ class ReleaseClient {
           }
         }
       }
-      notice = 'GitHub API 暂不可用，已通过官方发布订阅检查更新';
+      notice = '已通过官方发布订阅完成检查';
       return latest;
     } catch (error) {
       if (error is UpdateException && error is! _UpdateSourceException) rethrow;
-      if (apiError is UpdateException) throw apiError;
-      throw const UpdateException('暂时无法连接 GitHub 更新源，请切换网络或稍后重试');
+      throw _bothSourcesFailed('检查更新', apiError, error);
     }
   }
+
+  String _sourceError(Object error) => switch (error) {
+    UpdateException() => error.message,
+    TimeoutException() => '连接超时',
+    http.ClientException() => '网络连接失败',
+    _ => '返回数据格式异常',
+  };
+
+  UpdateException _bothSourcesFailed(
+    String action,
+    Object api,
+    Object feed,
+  ) => UpdateException(
+    '$action未完成：${_sourceError(api)}；备用发布源也未能完成：${_sourceError(feed)}。可在官方下载页查看版本。',
+  );
 
   String? _releaseTag(String? value) {
     final uri = value == null ? null : Uri.tryParse(value);

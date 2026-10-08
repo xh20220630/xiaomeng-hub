@@ -25,19 +25,28 @@ class HistoryController extends Notifier<ConversationHistory> {
   final String sessionId;
   bool _alive = true;
   bool _busy = false;
+  bool _refreshPending = false;
   Timer? _timer;
 
   @override
   ConversationHistory build() {
     ref.watch(apiServiceProvider);
     ref.listen(
-      monitorProvider.select(
-        (s) => s.serverProjects.values
-            .expand((p) => p.sessions)
-            .where((s) => s.sessionId == sessionId)
-            .firstOrNull
-            ?.updatedAt,
-      ),
+      monitorProvider.select((s) {
+        final session =
+            s.serverProjects.values
+                .expand((p) => p.sessions)
+                .where((s) => s.sessionId == sessionId)
+                .firstOrNull ??
+            s.sessions[sessionId];
+        final project = s.serverProjects.values
+            .where((p) => p.activeSessionId == sessionId)
+            .firstOrNull;
+        return (
+          session?.updatedAt ?? project?.lastEventAt,
+          session?.status ?? project?.status,
+        );
+      }),
       (_, _) {
         _timer?.cancel();
         _timer = Timer(const Duration(milliseconds: 400), refresh);
@@ -56,7 +65,12 @@ class HistoryController extends Notifier<ConversationHistory> {
   Future<void> loadMore() => _load(true);
 
   Future<void> _load(bool older) async {
-    if (_busy || !_alive || (older && state.cursor == null)) return;
+    if (!_alive || (older && state.cursor == null)) return;
+    if (_busy) {
+      // 完成状态可能在分页请求期间到达，保留一次最终正文刷新。
+      if (!older) _refreshPending = true;
+      return;
+    }
     _busy = true;
     _timer?.cancel();
     final olderError = !older && state.failedOlder ? state.error : null;
@@ -107,6 +121,10 @@ class HistoryController extends Notifier<ConversationHistory> {
       }
     } finally {
       _busy = false;
+      if (_alive && _refreshPending) {
+        _refreshPending = false;
+        unawaited(refresh());
+      }
     }
   }
 }

@@ -23,6 +23,8 @@ class ReleaseHistory extends ChangeNotifier {
   bool loaded = false;
   bool hasMore = false;
   bool fromCache = false;
+  bool partial = false;
+  String? notice;
   String? error;
   int _nextPage = 1;
   bool _disposed = false;
@@ -36,6 +38,7 @@ class ReleaseHistory extends ChangeNotifier {
             .map(ReleaseHistoryEntry.fromJson)
             .toList();
         fromCache = entries.isNotEmpty;
+        partial = prefs.getBool('$cacheKey.partial') ?? false;
       }
     } catch (_) {
       entries = [];
@@ -51,11 +54,27 @@ class ReleaseHistory extends ChangeNotifier {
     try {
       final result = await client.history(page: page);
       if (_disposed) return;
-      final merged = {
-        if (page > 1)
-          for (final entry in entries) entry.id: entry,
-        for (final entry in result.entries) entry.id: entry,
+      final previous = {
+        for (final entry in entries) entry.url ?? entry.id: entry,
       };
+      final merged = <String, ReleaseHistoryEntry>{
+        if (page > 1 || result.partial) ...previous,
+      };
+      for (final entry in result.entries) {
+        final key = entry.url ?? entry.id;
+        final saved = previous[key];
+        merged[key] = result.partial && saved != null
+            ? ReleaseHistoryEntry.fromJson({
+                ...entry.toJson(),
+                'id': saved.id,
+                'build': entry.build ?? saved.build,
+                'preview': entry.preview ?? saved.preview,
+                'publishedAt':
+                    saved.publishedAt?.toIso8601String() ??
+                    entry.publishedAt?.toIso8601String(),
+              })
+            : entry;
+      }
       entries = merged.values.toList()
         ..sort(
           (a, b) => (b.publishedAt ?? DateTime(1970)).compareTo(
@@ -66,10 +85,16 @@ class ReleaseHistory extends ChangeNotifier {
       hasMore = result.hasMore;
       loaded = true;
       fromCache = false;
+      partial = result.partial;
+      notice = result.notice;
       try {
         await prefs.setString(
           cacheKey,
           jsonEncode(entries.take(20).map((entry) => entry.toJson()).toList()),
+        );
+        await prefs.setBool(
+          '$cacheKey.partial',
+          partial || hasMore || entries.length > 20,
         );
       } catch (_) {
         // Cache failures must not hide successfully fetched release notes.

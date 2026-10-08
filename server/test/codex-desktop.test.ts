@@ -13,6 +13,7 @@ import {
 } from '../src/adapters/codex/codex-desktop.js';
 import { createTestAgent } from './fixtures/agent.js';
 import type { EventInput } from '../src/types/domain.js';
+import type { SessionInput } from '../src/types/domain.js';
 
 /**
  * 按桌面 IPC 格式加上长度头，用于测试拆包行为。
@@ -261,4 +262,43 @@ test('desktop patches insert arrays, remove values and reject prototype paths', 
     applyDesktopPatches({}, [{ op: 'add', path: ['__proto__', 'polluted'], value: true }]),
   );
   assert.equal(({} as Record<string, unknown>).polluted, undefined);
+});
+
+test('completed desktop turns stay finished across repeated snapshots with stale runtime state', async (t) => {
+  const { desktop } = await fixture(t);
+  const sessions: SessionInput[] = [];
+  const events: EventInput[] = [];
+  const adapter = createTestAgent({
+    rpc: new EventEmitter(),
+    client: {
+      isAvailable: () => true,
+      request: async (_: string, body: SessionInput) => sessions.push(body),
+      event: async (_: string, type: string, fields: EventInput) =>
+        events.push({ type, ...fields }),
+      resolveApproval: async () => {},
+    },
+    desktop,
+    projects: [process.cwd()],
+  });
+  t.after(() => adapter.desktop!.close());
+  await desktop.follow('desktop-task');
+  const state = await desktop.state('desktop-task');
+  await adapter.desktop!.project('desktop-task');
+  adapter.activeTurns.set('desktop-task', 'active-turn');
+  state.turns![0].status = 'completed';
+  state.turns![0].items![0].phase = 'final_answer';
+  state.turns![0].items![0].text = 'Finished';
+  await adapter.desktop!.project('desktop-task');
+  await adapter.desktop!.project('desktop-task');
+  assert.equal(sessions.at(-1)!.session.status, 'done');
+  assert.equal(adapter.activeTurns.has('desktop-task'), false);
+  assert.equal(events.filter((event) => event.type === 'assistant.done').length, 1);
+  assert.ok(
+    events.some((event) => event.type === 'message.assistant' && event.text === 'Finished'),
+  );
+
+  state.turns!.push({ turnId: 'next-turn', status: 'inProgress', items: [] });
+  await adapter.desktop!.project('desktop-task');
+  assert.equal(sessions.at(-1)!.session.status, 'running');
+  assert.equal(events.at(-1)!.type, 'assistant.start');
 });

@@ -117,12 +117,19 @@ export class CodexDesktopBridge {
     if (!state || !this.has(id)) return;
     const turns = desktopTurns(state),
       last = turns.at(-1);
+    const running = last?.status === 'inProgress';
+    const finished = ['completed', 'failed', 'interrupted'].includes(last?.status || '');
+    // 桌面轮次已结束时，运行标记可能晚一帧更新；不能让旧标记重新激活任务。
+    if (finished) {
+      adapter.activeTurns.delete(id);
+      adapter.streams.delete(id);
+    }
     const thread = {
       ...adapter.threads.get(id),
       id,
       cwd: state.cwd,
       name: state.title,
-      status: state.threadRuntimeStatus,
+      status: finished ? { type: 'idle' } : state.threadRuntimeStatus,
       lastTurnStatus: last?.status,
       model: state.latestThreadSettings?.model || state.latestModel,
       reasoningEffort: state.latestThreadSettings?.effort || state.latestReasoningEffort,
@@ -136,10 +143,8 @@ export class CodexDesktopBridge {
     adapter.threads.set(id, thread);
     await adapter.publish(thread);
     const previous = this.lastTurns.get(id);
-    const running = last?.status === 'inProgress';
     if (running && (previous?.id !== last.turnId || previous.status !== 'inProgress'))
       await adapter.client.event(adapter.sessionId(id), 'assistant.start', { turnId: last.turnId });
-    this.lastTurns.set(id, { id: last?.turnId, status: last?.status });
     if (last) {
       const latest = last.items?.at(-1);
       for (const item of last.items || []) {
@@ -179,11 +184,13 @@ export class CodexDesktopBridge {
     if (!running && previous?.status === 'inProgress') {
       this.outputs.delete(`${id}:assistant`);
       await adapter.client.event(adapter.sessionId(id), 'assistant.done', {
+        turnId: last?.turnId,
         ok: last?.status !== 'failed',
         aborted: last?.status === 'interrupted',
       });
     }
     await this.syncRequests(id, state.requests || []);
+    this.lastTurns.set(id, { id: last?.turnId, status: last?.status });
   }
 
   /**

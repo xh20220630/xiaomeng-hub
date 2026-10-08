@@ -232,6 +232,8 @@ class MonitorState {
 
 class MonitorNotifier extends Notifier<MonitorState> {
   final Set<String> _completedSessions = {};
+  final Map<String, int> _pendingSessionUpdates = {};
+  int _snapshotRevision = 0;
   WsService? _ws;
   StreamSubscription? _msgSub;
   StreamSubscription? _statusSub;
@@ -275,19 +277,28 @@ class MonitorNotifier extends Notifier<MonitorState> {
       /* Legacy bridges do not expose the registry. */
     }
     try {
+      final revision = _snapshotRevision;
       final sessions = await api.getSessions();
-      state = state.copyWith(
-        sessions: {for (final s in sessions) s.sessionId: s},
-      );
+      if (revision == _snapshotRevision) {
+        final merged = sessions.map(_latestSession).toList();
+        state = state.copyWith(
+          sessions: {for (final s in merged) s.sessionId: s},
+        );
+        _reconcileCompletedSessions(merged);
+      }
     } catch (_) {
       /* offline; WS snapshot fills in */
     }
     try {
+      final revision = _snapshotRevision;
       final projects = await api.getProjects();
-      if (projects.isNotEmpty) {
+      // 初载 REST 与 WebSocket 并行，晚到的 HTTP 响应不能覆盖实时状态。
+      if (projects.isNotEmpty && revision == _snapshotRevision) {
+        final merged = projects.map(_latestProject).toList();
         state = state.copyWith(
-          serverProjects: {for (final p in projects) p.projectId: p},
+          serverProjects: {for (final p in merged) p.projectId: p},
         );
+        _reconcileCompletedProjects(merged);
       }
     } catch (_) {
       /* backend may not expose projects yet -> derive client-side */
@@ -300,6 +311,7 @@ class MonitorNotifier extends Notifier<MonitorState> {
   }
 
   void _onMessage(Map<String, dynamic> msg) {
+    _snapshotRevision++;
     switch (msg['type']) {
       case 'agents.snapshot':
         final agents = (msg['agents'] as List).map(
@@ -334,10 +346,12 @@ class MonitorNotifier extends Notifier<MonitorState> {
       case 'snapshot':
         final list = (msg['sessions'] as List)
             .map((e) => Session.fromJson(e as Map<String, dynamic>))
+            .map(_latestSession)
             .toList();
         state = state.copyWith(
           sessions: {for (final s in list) s.sessionId: s},
         );
+        _reconcileCompletedSessions(list);
         break;
       case 'event':
         final session = Session.fromJson(
@@ -350,15 +364,18 @@ class MonitorNotifier extends Notifier<MonitorState> {
       case 'projects.snapshot':
         final list = (msg['projects'] as List)
             .map((e) => Project.fromJson(e as Map<String, dynamic>))
+            .map(_latestProject)
             .toList();
         state = state.copyWith(
           serverProjects: {for (final p in list) p.projectId: p},
         );
+        _reconcileCompletedProjects(list);
         _refreshLiveUpdate();
         break;
       case 'project.update':
         final p = Project.fromJson(msg['project'] as Map<String, dynamic>);
         final prev = state.serverProjects[p.projectId];
+        if (!identical(_latestProject(p), p)) break;
         final next = Map<String, Project>.from(state.serverProjects)
           ..[p.projectId] = p;
         // Clear a local status override (e.g. rejected) once the server sends
@@ -370,6 +387,7 @@ class MonitorNotifier extends Notifier<MonitorState> {
           override = Map<String, String>.from(override)..remove(p.projectId);
         }
         state = state.copyWith(serverProjects: next, statusOverride: override);
+        _reconcileCompletedProjects([p]);
         // Only alert on a real transition into "done" (running/approval -> done),
         // not on the initial snapshot of already-finished projects, nor on
         // repeated done updates. (Android: native service owns notifications.)
@@ -403,6 +421,10 @@ class MonitorNotifier extends Notifier<MonitorState> {
         );
         break;
       case 'assistant.delta':
+        final sid = msg['sessionId'] as String?;
+        final turnId = msg['turnId'] as String?;
+        final activeTurn = state.streamingTurns[sid];
+        if (turnId != null && activeTurn != null && turnId != activeTurn) break;
         _setStreaming(
           msg['sessionId'] as String?,
           msg['text'] as String? ?? '',
@@ -414,10 +436,12 @@ class MonitorNotifier extends Notifier<MonitorState> {
       case 'assistant.done':
         final sid = msg['sessionId'] as String?;
         if (sid != null) {
-          _completedSessions.add(sid);
-          if (_completedSessions.length > 500) {
-            _completedSessions.remove(_completedSessions.first);
+          final turnId = msg['turnId'] as String?;
+          final activeTurn = state.streamingTurns[sid];
+          if (turnId != null && activeTurn != null && turnId != activeTurn) {
+            break;
           }
+          _rememberCompleted(sid);
           final ok = msg['ok'] as bool? ?? true;
           final error = msg['error'] as String?;
           final st = Map<String, String>.from(state.streaming)..remove(sid);
@@ -427,7 +451,7 @@ class MonitorNotifier extends Notifier<MonitorState> {
           if (!ok) {
             // Surface the error + give the user their text back (input box).
             failed = Map<String, FailedSend>.from(failed)
-              ..[sid] = FailedSend(userText ?? '', error);
+              ..[sid] = FailedSend(userText ?? failed[sid]?.text ?? '', error);
           }
           state = state.copyWith(
             streaming: st,
@@ -473,6 +497,7 @@ class MonitorNotifier extends Notifier<MonitorState> {
   }
 
   void _applyEvent({Session? session, required TaskEvent ev}) {
+    if (session != null) session = _latestSession(session);
     final sessions = Map<String, Session>.from(state.sessions);
     if (session != null) sessions[session.sessionId] = session;
     final live = Map<String, List<TaskEvent>>.from(state.liveEvents);
@@ -481,12 +506,135 @@ class MonitorNotifier extends Notifier<MonitorState> {
     if (buf.length > 300) buf.removeLast();
     live[ev.sessionId] = buf;
     state = state.copyWith(sessions: sessions, liveEvents: live);
+    if (session != null) _reconcileCompletedSessions([session]);
     if (ev.status == 'done' && _dartMayNotify) {
       final s = session ?? state.sessions[ev.sessionId];
       ref
           .read(notificationServiceProvider)
           .show('✅ 任务完成', s?.summary ?? '任务已完成', payload: ev.sessionId);
     }
+  }
+
+  void _rememberCompleted(String sessionId) {
+    _pendingSessionUpdates.remove(sessionId);
+    _completedSessions.add(sessionId);
+    if (_completedSessions.length > 500) {
+      _completedSessions.remove(_completedSessions.first);
+    }
+  }
+
+  Session _latestSession(Session incoming) {
+    final previous = _knownSession(incoming.sessionId);
+    return previous != null &&
+            (incoming.updatedAt ?? 0) > 0 &&
+            (previous.updatedAt ?? 0) > incoming.updatedAt!
+        ? previous
+        : incoming;
+  }
+
+  Project _latestProject(Project incoming) {
+    final previous = state.serverProjects[incoming.projectId];
+    return previous != null &&
+            incoming.lastEventAt > 0 &&
+            previous.lastEventAt > incoming.lastEventAt
+        ? previous
+        : incoming;
+  }
+
+  void _reconcileCompletedProjects(Iterable<Project> projects) {
+    _reconcileCompletedSessions(
+      projects.expand(
+        (p) => [
+          ...p.sessions,
+          if (p.activeSessionId != null &&
+              !p.sessions.any((s) => s.sessionId == p.activeSessionId))
+            Session(
+              sessionId: p.activeSessionId!,
+              status: p.status,
+              updatedAt: p.lastEventAt,
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _reconcileCompletedSessions(Iterable<Session> sessions) {
+    for (final session in sessions) {
+      final sid = session.sessionId;
+      if (session.status == 'running') {
+        _completedSessions.remove(sid);
+        final pendingUpdate = _pendingSessionUpdates[sid];
+        if (pendingUpdate != null &&
+            (session.updatedAt ?? 0) >= pendingUpdate) {
+          _pendingSessionUpdates.remove(sid);
+        }
+        continue;
+      }
+      if (!const {
+        'done',
+        'error',
+        'paused',
+        'ended',
+        'rejected',
+      }.contains(session.status)) {
+        continue;
+      }
+      // 尚未收到新轮次的运行状态时，旧完成快照不能清掉新输入或回复。
+      final pendingUpdate = _pendingSessionUpdates[sid];
+      if (pendingUpdate != null &&
+          (session.updatedAt ?? 0) > 0 &&
+          session.updatedAt! <= pendingUpdate) {
+        continue;
+      }
+      _rememberCompleted(sid);
+      if (!state.streaming.containsKey(sid) &&
+          !state.pendingUser.containsKey(sid)) {
+        continue;
+      }
+      final pendingText = state.pendingUser[sid];
+      // 重连可能错过 assistant.done，以服务器的最终状态收束流式占位。
+      state = state.copyWith(
+        streaming: Map.of(state.streaming)..remove(sid),
+        streamingPhases: Map.of(state.streamingPhases)..remove(sid),
+        streamingItems: Map.of(state.streamingItems)..remove(sid),
+        streamingTurns: Map.of(state.streamingTurns)..remove(sid),
+        pendingUser: Map.of(state.pendingUser)..remove(sid),
+        failedSends: session.status == 'error' && pendingText != null
+            ? {
+                ...state.failedSends,
+                sid: FailedSend(pendingText, '任务执行失败，请查看执行记录'),
+              }
+            : state.failedSends,
+      );
+      ref.invalidate(sessionEventsProvider(sid));
+    }
+  }
+
+  int _sessionUpdatedAt(String sessionId) {
+    return _knownSession(sessionId)?.updatedAt ?? 0;
+  }
+
+  Session? _knownSession(String sessionId) {
+    var latest = state.sessions[sessionId];
+    for (final project in state.serverProjects.values) {
+      for (final session in project.sessions) {
+        if (session.sessionId == sessionId &&
+            (latest == null ||
+                (session.updatedAt ?? 0) >= (latest.updatedAt ?? 0))) {
+          latest = session;
+        }
+      }
+      if (project.activeSessionId == sessionId &&
+          !project.sessions.any((s) => s.sessionId == sessionId) &&
+          (latest == null || project.lastEventAt >= (latest.updatedAt ?? 0))) {
+        latest = Session(
+          sessionId: sessionId,
+          status: project.status,
+          updatedAt: project.lastEventAt,
+        );
+      }
+    }
+    return latest;
   }
 
   // ---- upstream (App -> server) ----
@@ -519,7 +667,7 @@ class MonitorNotifier extends Notifier<MonitorState> {
     String? itemId,
     String? turnId,
   }) {
-    if (sessionId == null) return;
+    if (sessionId == null || _completedSessions.contains(sessionId)) return;
     final st = Map<String, String>.from(state.streaming)..[sessionId] = text;
     state = state.copyWith(
       streaming: st,
@@ -583,6 +731,8 @@ class MonitorNotifier extends Notifier<MonitorState> {
         }) ??
         false;
     if (!sent) return false;
+    _completedSessions.remove(sessionId);
+    _pendingSessionUpdates[sessionId] = _sessionUpdatedAt(sessionId);
     // Optimistically show the user's message + a streaming placeholder.
     final pu = Map<String, String>.from(state.pendingUser)..[sessionId] = text;
     final st = Map<String, String>.from(state.streaming)..[sessionId] = '';
@@ -603,8 +753,13 @@ class MonitorNotifier extends Notifier<MonitorState> {
   void primeNewSession(String sessionId, String text) {
     // A fast worker can finish before the HTTP create response reaches the UI.
     if (_completedSessions.contains(sessionId)) return;
+    if (_knownSession(sessionId)?.status != 'running' &&
+        state.streamingTurns[sessionId] == null) {
+      _pendingSessionUpdates[sessionId] = _sessionUpdatedAt(sessionId);
+    }
     final pu = Map<String, String>.from(state.pendingUser)..[sessionId] = text;
-    final st = Map<String, String>.from(state.streaming)..[sessionId] = '';
+    final st = Map<String, String>.from(state.streaming)
+      ..putIfAbsent(sessionId, () => '');
     state = state.copyWith(pendingUser: pu, streaming: st);
   }
 

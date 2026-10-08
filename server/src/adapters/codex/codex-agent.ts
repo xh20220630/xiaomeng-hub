@@ -647,23 +647,76 @@ export class CodexAgent {
     }
     for (const summary of indexed.values()) {
       if (!this.projectFor(summary)) continue;
-      const old = this.threads.get(summary.id);
       if (this.desktop?.has(summary.id)) {
-        await this.desktop.project(summary.id);
+        await this.enqueue(() => this.desktop!.project(summary.id));
         continue;
       }
-      const thread = { ...old, ...summary, turns: old?.turns || [] };
-      this.threads.set(thread.id, thread);
-      if (
-        this.rpc.url &&
-        !thread.archived &&
-        thread.status?.type === 'active' &&
-        thread.canAcceptDirectInput === true &&
-        !this.attached.has(thread.id)
-      ) {
-        await this.resume(thread).catch(this.onError);
-      }
-      await this.publish(thread);
+      await this.enqueue(async () => {
+        const old = this.threads.get(summary.id);
+        let newerLiveState = (old?.updatedAt || 0) > (summary.updatedAt || 0);
+        let confirmed: CodexThread | undefined;
+        const terminal = ['completed', 'failed', 'interrupted'];
+        const indexedSecond = Math.floor(summary.updatedAt || 0);
+        const liveSecond = Math.floor(old?.updatedAt || 0);
+        if (
+          old &&
+          this.state(old) === 'running' &&
+          indexedSecond >= liveSecond &&
+          ((indexedSecond === liveSecond && terminal.includes(summary.lastTurnStatus || '')) ||
+            (!summary.lastTurnStatus && summary.status?.type !== 'active'))
+        ) {
+          // 索引只精确到秒；状态冲突或旧索引缺少轮次状态时，核对当前轮次再收束。
+          newerLiveState = true;
+          try {
+            const { thread: current } = await this.rpc.request('thread/read', {
+              threadId: summary.id,
+              includeTurns: true,
+            });
+            const last = current.turns?.at(-1);
+            const activeTurn =
+              this.activeTurns.get(summary.id) ||
+              old.turns?.findLast((turn) => turn.status === 'inProgress')?.id;
+            if (last && terminal.includes(last.status) && (!activeTurn || activeTurn === last.id))
+              confirmed = current;
+          } catch (cause) {
+            this.onError(asError(cause));
+          }
+        }
+        const indexedTurn =
+          confirmed?.turns?.at(-1)?.status || (!newerLiveState && summary.lastTurnStatus);
+        const thread = {
+          ...old,
+          ...summary,
+          updatedAt: confirmed
+            ? Math.max(old?.updatedAt || 0, confirmed.updatedAt || 0, summary.updatedAt || 0)
+            : newerLiveState
+              ? old!.updatedAt
+              : summary.updatedAt,
+          status: confirmed ? { type: 'idle' } : newerLiveState ? old!.status : summary.status,
+          lastTurnStatus: confirmed
+            ? indexedTurn || undefined
+            : newerLiveState
+              ? old!.lastTurnStatus
+              : (summary.lastTurnStatus ?? old?.lastTurnStatus),
+          // 索引已更新时，旧正文中的轮次状态不再代表当前任务。
+          turns: confirmed?.turns || (indexedTurn ? [] : old?.turns || []),
+        };
+        if (indexedTurn && terminal.includes(indexedTurn) && thread.status?.type !== 'active') {
+          this.activeTurns.delete(thread.id);
+          this.streams.delete(thread.id);
+        }
+        this.threads.set(thread.id, thread);
+        if (
+          this.rpc.url &&
+          !thread.archived &&
+          thread.status?.type === 'active' &&
+          thread.canAcceptDirectInput === true &&
+          !this.attached.has(thread.id)
+        ) {
+          await this.resume(thread).catch(this.onError);
+        }
+        await this.publish(thread);
+      });
     }
     if (this.desktop) {
       const candidates = [...this.threads.values()].filter(
@@ -1169,21 +1222,40 @@ export class CodexAgent {
       await this.client.event(this.sessionId(thread.id), 'assistant.start', { turnId: p.turn.id });
       await this.publish(thread);
     } else if (method === 'turn/completed') {
-      this.activeTurns.delete(thread.id);
-      this.streams.delete(thread.id);
-      thread.status = { type: 'idle' };
-      thread.turns = [...(thread.turns || []).filter((t) => t.id !== p.turn.id), p.turn];
-      thread.updatedAt = Date.now() / 1000;
+      const activeTurn =
+        this.activeTurns.get(thread.id) ||
+        thread.turns?.findLast((turn) => turn.status === 'inProgress')?.id;
+      const turnId = p.turn.id || activeTurn;
+      const current = !activeTurn || !turnId || activeTurn === turnId;
+      // 旧轮次仍需保存最终活动，但不能让迟到的结束通知收束已经开始的新轮次。
+      if (current) {
+        this.activeTurns.delete(thread.id);
+        this.streams.delete(thread.id);
+        thread.status = { type: 'idle' };
+        thread.turns = [
+          ...(thread.turns || []).filter((t) => t.id !== turnId),
+          {
+            ...p.turn,
+            id: turnId || p.turn.id,
+          },
+        ];
+        thread.updatedAt = Date.now() / 1000;
+      } else {
+        thread.turns = thread.turns?.map((turn) => (turn.id === turnId ? p.turn : turn));
+      }
       for (const item of p.turn.items || [])
-        await this.item(thread.id, p.turn.id, item, true, Date.now());
-      await this.client.event(this.sessionId(thread.id), 'assistant.done', {
-        ok: p.turn.status !== 'failed',
-        aborted: p.turn.status === 'interrupted',
-        error: clipped(p.turn.error?.message, 2000),
-      });
-      await this.publish(thread);
+        await this.item(thread.id, turnId || p.turn.id, item, true, Date.now());
+      if (current) {
+        await this.client.event(this.sessionId(thread.id), 'assistant.done', {
+          turnId,
+          ok: p.turn.status !== 'failed',
+          aborted: p.turn.status === 'interrupted',
+          error: clipped(p.turn.error?.message, 2000),
+        });
+        await this.publish(thread);
+      }
       for (const request of [...this.requests.values()])
-        if (request.params.threadId === thread.id && request.params.turnId === p.turn.id)
+        if (request.params.threadId === thread.id && request.params.turnId === turnId)
           await this.expireRequest(request);
     } else if (method === 'item/agentMessage/delta') {
       const text = clipped((this.streams.get(thread.id) || '') + p.delta, 256000);

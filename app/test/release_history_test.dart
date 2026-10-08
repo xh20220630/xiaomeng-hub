@@ -43,6 +43,22 @@ http.Response response(Object value, {int status = 200}) => http.Response(
   headers: {'content-type': 'application/json; charset=utf-8'},
 );
 
+const limitedReleaseUrl =
+    'https://github.com/$updateRepository/releases/tag/preview-2.0.5-build20';
+const limitedFeed =
+    '''
+<feed xmlns="http://www.w3.org/2005/Atom"><entry>
+<title>小梦 2.0.5</title><link rel="alternate" href="$limitedReleaseUrl"/>
+<updated>2026-09-28T09:00:00Z</updated>
+<content type="html">&lt;h2&gt;订阅更新说明&lt;/h2&gt;&lt;p&gt;修复版本管理&lt;/p&gt;</content>
+</entry></feed>''';
+
+http.Response feedResponse() => http.Response(
+  limitedFeed,
+  200,
+  headers: {'content-type': 'application/atom+xml; charset=utf-8'},
+);
+
 class _Platform extends UpdatePlatform {
   int downloads = 0;
   @override
@@ -51,6 +67,8 @@ class _Platform extends UpdatePlatform {
   void onProgress(void Function(double) listener) {}
   @override
   void dispose() {}
+  @override
+  Future<void> clear() async {}
   @override
   Future<Map<String, dynamic>> info() async => {
     'version': '2.0.2',
@@ -70,6 +88,124 @@ void main() {
     SharedPreferences.setMockInitialValues({'updates.autoDownload': false});
     prefs = await SharedPreferences.getInstance();
   });
+
+  test(
+    'feed refresh retains older cached releases and known channel metadata',
+    () async {
+      var limited = false;
+      var clock = DateTime.utc(2026, 10, 3);
+      final api = ReleaseClient(
+        MockClient((request) async {
+          if (request.url.host != 'api.github.com') return feedResponse();
+          if (limited) return http.Response('', 429);
+          return response([
+            {...note(5, '2.0.5'), 'html_url': limitedReleaseUrl},
+            note(2, '2.0.2', preview: false),
+          ]);
+        }),
+        now: () => clock,
+        cacheDuration: Duration.zero,
+      );
+      final history = ReleaseHistory(api, prefs);
+      addTearDown(history.dispose);
+      await history.load();
+      limited = true;
+      await history.load(refresh: true);
+      expect(history.error, isNull);
+      expect(history.entries.length, 2);
+      expect(history.entries.first.id, '5');
+      expect(history.entries.first.preview, isTrue);
+      expect(history.entries.first.notes, contains('## 订阅更新说明'));
+      expect(history.entries.last.preview, isFalse);
+      expect(history.partial, isTrue);
+      expect(history.notice, contains('官方发布订阅'));
+      expect(history.hasMore, isFalse);
+      final restored = ReleaseHistory(api, prefs);
+      expect(restored.partial, isTrue);
+      expect(restored.entries.length, 2);
+      restored.dispose();
+      limited = false;
+      clock = clock.add(const Duration(minutes: 2));
+      await history.load(refresh: true);
+      expect(history.partial, isFalse);
+      expect(history.notice, isNull);
+      expect(history.entries.length, 2);
+    },
+  );
+
+  testWidgets(
+    'checking updates during API limits also renders history without a quota error',
+    (tester) async {
+      final api = ReleaseClient(
+        MockClient((request) async {
+          if (request.url.host == 'api.github.com') {
+            return http.Response('', 429);
+          }
+          if (request.url.path.endsWith('.atom')) return feedResponse();
+          return response({
+            'version': '2.0.5',
+            'buildNumber': 20,
+            'artifacts': [
+              {
+                'name': 'xiaomeng-v2.0.5-android.apk',
+                'bytes': 1234,
+                'sha256': 'a' * 64,
+              },
+            ],
+          });
+        }),
+      );
+      final updates = AppUpdates(prefs, api, _Platform());
+      await updates.initialize();
+      final history = ReleaseHistory(api, prefs);
+      addTearDown(updates.dispose);
+      addTearDown(history.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appUpdatesProvider.overrideWithValue(updates),
+            releaseHistoryProvider.overrideWithValue(history),
+          ],
+          child: MaterialApp(
+            theme: buildAppTheme(),
+            home: const AppVersionScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('检查更新'));
+      await tester.pumpAndSettle();
+      expect(updates.available?.version.build, 20);
+      expect(history.error, isNull);
+      expect(updates.message, contains('发现新版本'));
+      expect(find.textContaining('额度已用完'), findsNothing);
+      expect(find.byType(MarkdownText), findsOneWidget);
+      await tester.tap(find.text('版本历史'));
+      await tester.pumpAndSettle();
+      expect(history.entries.single.preview, isNull);
+      await tester.scrollUntilVisible(
+        find.text('渠道待确认'),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('渠道待确认'), findsOneWidget);
+      expect(find.text('已展示全部已发布版本'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.textContaining('当前仅展示近期发布'),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('当前仅展示近期发布'), findsOneWidget);
+      await tester.ensureVisible(find.widgetWithText(ChoiceChip, '正式版'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ChoiceChip, '正式版'));
+      await tester.pumpAndSettle();
+      expect(find.text('渠道待确认'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   test(
     'history reads old notes without APKs, ignores drafts and rejects foreign URLs',

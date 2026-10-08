@@ -172,11 +172,7 @@ fn collect_logs(
     });
 }
 
-fn launch(
-    runtime: &Path,
-    state: Arc<Mutex<HostStatus>>,
-    ready: Arc<AtomicBool>,
-) -> Result<Child, String> {
+fn host_command(runtime: &Path) -> Result<Command, String> {
     let node = runtime.join(if cfg!(windows) { "node.exe" } else { "node" });
     let server = runtime.join("server");
     let entry = server.join("dist/scripts/start-host.js");
@@ -192,7 +188,8 @@ fn launch(
     let mut command = Command::new(node);
     command
         .arg("--disable-warning=ExperimentalWarning")
-        .arg(entry)
+        // Node.js 无法解析 Windows 的 \\?\ 入口路径；通过工作目录定位脚本。
+        .arg("dist/scripts/start-host.js")
         .current_dir(server)
         .env("PORT", "4897")
         .env("XIAOMENG_DESKTOP_CONTROL", "1")
@@ -203,6 +200,15 @@ fn launch(
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    Ok(command)
+}
+
+fn launch(
+    runtime: &Path,
+    state: Arc<Mutex<HostStatus>>,
+    ready: Arc<AtomicBool>,
+) -> Result<Child, String> {
+    let mut command = host_command(runtime)?;
     let mut child = hidden(&mut command)
         .spawn()
         .map_err(|error| format!("无法启动 host：{error}"))?;
@@ -384,6 +390,49 @@ fn supervise(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(windows)]
+    #[test]
+    fn node_starts_from_a_verbatim_install_path_with_spaces_and_unicode() {
+        use std::{fs, time::SystemTime};
+
+        let temporary = std::env::temp_dir();
+        let directory = temporary.join(format!(
+            "xiaomeng-host-path-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let runtime = directory.join("小梦 Host/runtime");
+        fs::create_dir_all(runtime.join("server/dist/scripts")).unwrap();
+        fs::copy(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/node.exe"),
+            runtime.join("node.exe"),
+        )
+        .unwrap();
+        fs::write(
+            runtime.join("server/dist/scripts/start-host.js"),
+            "console.log('host entry started');",
+        )
+        .unwrap();
+        let runtime = fs::canonicalize(runtime).unwrap();
+        assert!(runtime.as_os_str().to_string_lossy().starts_with(r"\\?\"));
+        let result = hidden(&mut host_command(&runtime).unwrap()).output();
+        assert_eq!(directory.parent(), Some(temporary.as_path()));
+        fs::remove_dir_all(&directory).unwrap();
+        let output = result.unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout).trim(),
+            "host entry started"
+        );
+    }
 
     #[test]
     fn navigation_is_limited_to_the_launcher_and_pair_page() {

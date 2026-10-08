@@ -140,6 +140,10 @@ class _AppVersionScreenState extends ConsumerState<AppVersionScreen> {
                     ..._historyContent(updates, history)
                   else
                     ..._overview(updates, history),
+                  const _ReleaseLink(
+                    url: 'https://github.com/$updateRepository/releases',
+                    label: '打开官方下载页',
+                  ),
                 ],
               ),
             ),
@@ -158,6 +162,7 @@ class _AppVersionScreenState extends ConsumerState<AppVersionScreen> {
     return [
       if (history.error != null) _HistoryError(history: history),
       if (history.fromCache) const _Hint('正在显示上次保存的更新说明'),
+      if (history.notice != null) _Hint(history.notice!),
       if (notes != null)
         _Panel(
           child: Column(
@@ -165,7 +170,7 @@ class _AppVersionScreenState extends ConsumerState<AppVersionScreen> {
             children: [
               if (record != null) ...[
                 Text(
-                  '${record.dateLabel} · ${record.preview ? '测试版' : '正式版'}',
+                  '${record.dateLabel} · ${record.channelLabel}',
                   style: AppFont.ui(size: 12, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 12),
@@ -212,8 +217,8 @@ class _AppVersionScreenState extends ConsumerState<AppVersionScreen> {
         .where(
           (entry) => switch (_filter) {
             _HistoryFilter.all => true,
-            _HistoryFilter.stable => !entry.preview,
-            _HistoryFilter.preview => entry.preview,
+            _HistoryFilter.stable => entry.preview == false,
+            _HistoryFilter.preview => entry.preview == true,
           },
         )
         .toList();
@@ -242,6 +247,7 @@ class _AppVersionScreenState extends ConsumerState<AppVersionScreen> {
       ),
       const SizedBox(height: 18),
       if (history.fromCache) const _Hint('已保存的历史记录 · 联网后可刷新'),
+      if (history.notice != null) _Hint(history.notice!),
       if (history.error != null) _HistoryError(history: history),
       for (var i = 0; i < entries.length; i++)
         _HistoryCard(
@@ -265,7 +271,9 @@ class _AppVersionScreenState extends ConsumerState<AppVersionScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 18),
           child: _Hint(
-            entries.isEmpty
+            history.partial
+                ? '当前仅展示近期发布及已保存记录；完整历史请查看官方下载页'
+                : entries.isEmpty
                 ? '暂无${switch (_filter) {
                     _HistoryFilter.all => '已发布版本',
                     _HistoryFilter.stable => '正式版记录',
@@ -543,7 +551,7 @@ class _HistoryCard extends StatelessWidget {
                                         if (latest)
                                           const _Badge('最新', highlighted: true),
                                         if (current) const _Badge('当前安装'),
-                                        _Badge(entry.preview ? '测试版' : '正式版'),
+                                        _Badge(entry.channelLabel),
                                       ],
                                     ),
                                   ),
@@ -751,14 +759,15 @@ class _ReleaseNotes extends StatelessWidget {
 
 class _ReleaseLink extends StatelessWidget {
   final String url;
-  const _ReleaseLink({required this.url});
+  final String label;
+  const _ReleaseLink({required this.url, this.label = '在 GitHub 查看完整发布'});
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(top: 16),
     child: OutlinedButton.icon(
       onPressed: () => openMarkdownLink(context, url),
       icon: const Icon(Icons.open_in_new_rounded, size: 15),
-      label: const Text('在 GitHub 查看完整发布'),
+      label: Text(label),
     ),
   );
 }
